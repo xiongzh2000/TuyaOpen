@@ -147,28 +147,29 @@ static OPERATE_RET __ai_nlg_process(cJSON *root, bool eof)
     AI_NOTIFY_TEXT_T text;
     text.data      = (char *)content;
     text.datalen   = strlen(content);
+
+    // Parse timeIndex from JSON if available
+    cJSON *time_idx = cJSON_GetObjectItem(root, "timeIndex");
+    text.timeindex = time_idx ? time_idx->valueint : 0;
+
     PR_NOTICE("text -> NLG eof: %d, content: %s, time: %d", eof, content, text.timeindex);
 
-    /* Send data to register callback */
-    static AI_USER_EVT_TYPE_E event_type = AI_USER_EVT_TEXT_STREAM_STOP;
-    if(event_type == AI_USER_EVT_TEXT_STREAM_STOP) {
-        if(eof) {
-            if(strlen(content) > 0) {
-                ai_user_event_notify(AI_USER_EVT_TEXT_STREAM_START, &text);
-                text.data = NULL;
-                text.datalen = 0;
-                ai_user_event_notify(AI_USER_EVT_TEXT_STREAM_STOP, &text);
-                event_type = AI_USER_EVT_TEXT_STREAM_STOP;
-            }
-        }else {
-            ai_user_event_notify(AI_USER_EVT_TEXT_STREAM_START, &text); 
-            event_type = AI_USER_EVT_TEXT_STREAM_DATA;
+    /* Send data to registered callbacks.
+     * Removed static state machine - now uses content/eof directly to handle
+     * interruption scenarios correctly. Each NLG frame is evaluated independently.
+     */
+    if (strlen(content) > 0) {
+        if (eof) {
+            // Single-frame complete message (short reply or post-interrupt residual)
+            ai_user_event_notify(AI_USER_EVT_TEXT_STREAM_START, &text);
+            ai_user_event_notify(AI_USER_EVT_TEXT_STREAM_STOP, &text);
+        } else {
+            // Streaming data: first or intermediate chunk
+            ai_user_event_notify(AI_USER_EVT_TEXT_STREAM_START, &text);
         }
-    } else {
-        if (event_type == AI_USER_EVT_TEXT_STREAM_DATA) {
-            ai_user_event_notify(eof?AI_USER_EVT_TEXT_STREAM_STOP:AI_USER_EVT_TEXT_STREAM_DATA, &text);
-            event_type = eof?AI_USER_EVT_TEXT_STREAM_STOP:AI_USER_EVT_TEXT_STREAM_DATA;
-        }
+    } else if (eof) {
+        // Empty content with eof flag (normal end or interrupt signal)
+        ai_user_event_notify(AI_USER_EVT_TEXT_STREAM_STOP, &text);
     }
 
     AI_AGENT_EMO_T emo;
