@@ -30,16 +30,70 @@
 ***********************variable define**********************
 ***********************************************************/
 static TDL_PRINTER_HANDLE sg_printer_hdl = NULL;
+static MUTEX_HANDLE       sg_print_mutex = NULL;
 
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
+/**
+ * @brief Initialize the printer mutex lock.
+ *
+ * This function creates a mutex to ensure that only one print job
+ * can run at a time, preventing conflicts between concurrent print
+ * requests (e.g., from APP and voice commands).
+ */
+static OPERATE_RET __printer_mutex_init(void)
+{
+    if (sg_print_mutex != NULL) {
+        return OPRT_OK;
+    }
+    return tal_mutex_create_init(&sg_print_mutex);
+}
+
+#define PRINT_MUTEX_TIMEOUT_MS (10 * 1000) // 10 seconds timeout for print lock
+
+/**
+ * @brief Acquire the printer mutex lock.
+ *
+ * This function blocks until the printer is available. If another
+ * print job is currently running, this call will wait indefinitely
+ * until the lock is released.
+ *
+ * @return OPERATE_RET Operation result code.
+ */
+static OPERATE_RET __printer_lock_acquire(void)
+{
+    if (sg_print_mutex == NULL) {
+        __printer_mutex_init();
+    }
+    return tal_mutex_lock(sg_print_mutex);
+}
+
+/**
+ * @brief Release the printer mutex lock.
+ *
+ * This function releases the printer lock, allowing other pending
+ * print jobs to proceed.
+ */
+static void __printer_lock_release(void)
+{
+    if (sg_print_mutex != NULL) {
+        tal_mutex_unlock(sg_print_mutex);
+    }
+}
 OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
 {
     OPERATE_RET rt = OPRT_OK;
 
     if (NULL == jpeg || 0 == len) {
         return OPRT_INVALID_PARM;
+    }
+
+    /* Acquire printer lock to prevent concurrent access */
+    OPERATE_RET lock_rt = __printer_lock_acquire();
+    if (lock_rt != OPRT_OK) {
+        PR_WARN("print: printer is busy, rejecting request");
+        return OPRT_COM_ERROR;
     }
 
     /* Reject non-JPEG payloads up front. The image album can now hold both
@@ -55,6 +109,7 @@ OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
                (len > 0) ? jpeg[0] : 0,
                (len > 1) ? jpeg[1] : 0,
                (len > 2) ? jpeg[2] : 0, len);
+        __printer_lock_release();
         return OPRT_NOT_SUPPORTED;
     }
 
@@ -73,6 +128,7 @@ OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
     if (0 == print_width) {
         PR_ERR("print: invalid dots_per_line");
         tdl_printer_close(sg_printer_hdl);
+        __printer_lock_release();
         return OPRT_INVALID_PARM;
     }
 
@@ -93,6 +149,7 @@ OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
     if (NULL == bitmap_buf) {
         PR_ERR("print: malloc %u bytes for bitmap failed", bitmap_bytes);
         tdl_printer_close(sg_printer_hdl);
+        __printer_lock_release();
         return OPRT_MALLOC_FAILED;
     }
 
@@ -107,6 +164,7 @@ OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
         PR_ERR("print: jpeg_decode_bitmap failed, rt:%d", rt);
         Free(bitmap_buf);
         tdl_printer_close(sg_printer_hdl);
+        __printer_lock_release();
         return rt;
     }
 
@@ -121,6 +179,8 @@ OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
     tdl_printer_end(sg_printer_hdl);
 
     tdl_printer_close(sg_printer_hdl);
+
+    __printer_lock_release();
 
     return rt;
 }
