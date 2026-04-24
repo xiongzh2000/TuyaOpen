@@ -56,6 +56,7 @@ typedef struct {
     uint32_t              dld_fc;
     uint32_t              first_packet;
     uint8_t               iv[16];
+    DELAYED_WORK_HANDLE   run_work;
 } TY_FILE_DL_CONTEX;
 static TY_FILE_DL_CONTEX s_file_dld_ctx;
 
@@ -63,6 +64,8 @@ static char **config_key_store[] = {&s_file_dld_ctx.config.provider, &s_file_dld
                                     &s_file_dld_ctx.config.sk,       &s_file_dld_ctx.config.bucket,
                                     &s_file_dld_ctx.config.endpoint, &s_file_dld_ctx.config.token,
                                     &s_file_dld_ctx.config.region,   &s_file_dld_ctx.config.pathconfig};
+
+static int __dl_post_activate_event(void *data);
 
 static OPERATE_RET __dl_mq_rept(cJSON *req_root, char *event, uint32_t code, char *name, char *errmsg)
 {
@@ -420,6 +423,7 @@ static OPERATE_RET __dl_get_file_from_cloud(char *filename)
 OPERATE_RET __dl_storage_action(char *filename)
 {
     OPERATE_RET rt = OPRT_OK;
+
     rt             = __dl_get_storage_config();
     if (OPRT_OK != rt) {
         PR_ERR("get storage config err,rt:%d", rt);
@@ -678,6 +682,7 @@ static void __dl_mq_protocol_cb(tuya_protocol_event_t *ev)
 static int __dl_post_activate_event(void *data)
 {
     OPERATE_RET rt    = OPRT_OK;
+
     cJSON      *skill = cJSON_CreateObject();
     TUYA_CHECK_NULL_RETURN(skill, OPRT_MALLOC_FAILED);
     cJSON_AddStringToObject(skill, "sdkVer", TUYA_BSV);
@@ -726,17 +731,17 @@ static int __dl_post_activate_event(void *data)
     return rt;
 }
 
-static int __dl_run_event(void *data)
+static void __dl_run_work_cb(void *data)
 {
     OPERATE_RET        rt     = OPRT_OK;
     tuya_iot_client_t *client = tuya_iot_client_get();
     if (!tuya_iot_activated(client)) {
-        return OPRT_OK;
+        goto EXIT;
     }
 
     TUYA_CALL_ERR_LOG(tuya_mqtt_protocol_register(&client->mqctx,
-                                                  PRO_MQ_APP_PROTOCOL_RX, 
-                                                  __dl_mq_protocol_cb, 
+                                                  PRO_MQ_APP_PROTOCOL_RX,
+                                                  __dl_mq_protocol_cb,
                                                   NULL));
 
     uint8_t *out     = NULL;
@@ -746,26 +751,52 @@ static int __dl_run_event(void *data)
         PR_ERR("tal_kv_get rt %s %d", KV_FILE_DL_TC_KEY, rt);
         if (OPRT_OK == tal_time_check_time_sync()) {
             TUYA_CALL_ERR_LOG(__dl_post_activate_event(NULL));
-        }else {
+        } else {
             TUYA_CALL_ERR_LOG(tal_event_subscribe(EVENT_TIME_SYNC, "file_dl_tc",
-                                                __dl_post_activate_event,
-                                                SUBSCRIBE_TYPE_ONETIME));
+                                                  __dl_post_activate_event,
+                                                  SUBSCRIBE_TYPE_ONETIME));
         }
-        
-        return rt;
+        goto EXIT;
     }
     memcpy(s_file_dld_ctx.tc_key, out, out_len);
     tal_kv_free(out);
     PR_DEBUG("restore tc success");
+
+EXIT:
+    tal_workq_cancel_delayed(s_file_dld_ctx.run_work);
+    s_file_dld_ctx.run_work = NULL;
+}
+
+static int __dl_run_event(void *data)
+{
+    if (s_file_dld_ctx.run_work) {
+        return OPRT_OK;
+    }
+
+    OPERATE_RET rt = tal_workq_init_delayed(WORKQ_SYSTEM, __dl_run_work_cb, NULL, &s_file_dld_ctx.run_work);
+    if (OPRT_OK != rt) {
+        PR_ERR("init run work err, rt:%d", rt);
+        return rt;
+    }
+
+    rt = tal_workq_start_delayed(s_file_dld_ctx.run_work, 0, LOOP_ONCE);
+    if (OPRT_OK != rt) {
+        PR_ERR("start run work err, rt:%d", rt);
+        tal_workq_cancel_delayed(s_file_dld_ctx.run_work);
+        s_file_dld_ctx.run_work = NULL;
+    }
     return rt;
 }
 
 static int __dl_reset_event(void *data)
 {
     OPERATE_RET rt = OPRT_OK;
-    if (s_file_dld_ctx.tc_key[0] == 0) {
-        return OPRT_OK;
+
+    if (s_file_dld_ctx.run_work) {
+        tal_workq_cancel_delayed(s_file_dld_ctx.run_work);
+        s_file_dld_ctx.run_work = NULL;
     }
+
     rt = tal_kv_del(KV_FILE_DL_TC_KEY);
     PR_DEBUG("delete tc key rt:%d", rt);
     return rt;

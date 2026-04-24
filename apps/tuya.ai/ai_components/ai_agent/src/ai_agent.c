@@ -60,7 +60,7 @@ static uint16_t __s_audio_codec_type = AI_AUDIO_CODEC_MP3;
 */
 OPERATE_RET __ai_agent_event_cb(AI_EVENT_TYPE type, AI_PACKET_PT ptype, AI_EVENT_ID eid)
 {
-    PR_DEBUG("ai agent -> recv event type: %d", type);
+    PR_DEBUG("ai agent -> recv event type: %d packet_tp:%d", type, ptype);
 
     if (AI_EVENT_START == type) {
         if (AI_PT_AUDIO == ptype) {

@@ -379,6 +379,7 @@ static void __ui_disp_msg_handle(AI_UI_MSG_T *msg_data)
             if (sg_chat_intfs.disp_link && msg_data->data) {
                 sg_chat_intfs.disp_link(FALSE, VIEW_IMAGE, __image_link_view_cb,
                                       msg_data->data, msg_data->len);
+                PR_NOTICE("image link");
             }
         } break;
 
@@ -386,6 +387,7 @@ static void __ui_disp_msg_handle(AI_UI_MSG_T *msg_data)
             if (sg_chat_intfs.disp_link && msg_data->data) {
                 sg_chat_intfs.disp_link(TRUE, VIEW_IMAGE, __image_link_view_cb,
                                       msg_data->data, msg_data->len);
+                PR_NOTICE("image link");
             }
         } break;
 
