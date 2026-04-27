@@ -35,13 +35,6 @@ static MUTEX_HANDLE       sg_print_mutex = NULL;
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
-/**
- * @brief Initialize the printer mutex lock.
- *
- * This function creates a mutex to ensure that only one print job
- * can run at a time, preventing conflicts between concurrent print
- * requests (e.g., from APP and voice commands).
- */
 static OPERATE_RET __printer_mutex_init(void)
 {
     if (sg_print_mutex != NULL) {
@@ -50,17 +43,6 @@ static OPERATE_RET __printer_mutex_init(void)
     return tal_mutex_create_init(&sg_print_mutex);
 }
 
-#define PRINT_MUTEX_TIMEOUT_MS (10 * 1000) // 10 seconds timeout for print lock
-
-/**
- * @brief Acquire the printer mutex lock.
- *
- * This function blocks until the printer is available. If another
- * print job is currently running, this call will wait indefinitely
- * until the lock is released.
- *
- * @return OPERATE_RET Operation result code.
- */
 static OPERATE_RET __printer_lock_acquire(void)
 {
     if (sg_print_mutex == NULL) {
@@ -69,18 +51,13 @@ static OPERATE_RET __printer_lock_acquire(void)
     return tal_mutex_lock(sg_print_mutex);
 }
 
-/**
- * @brief Release the printer mutex lock.
- *
- * This function releases the printer lock, allowing other pending
- * print jobs to proceed.
- */
 static void __printer_lock_release(void)
 {
     if (sg_print_mutex != NULL) {
         tal_mutex_unlock(sg_print_mutex);
     }
 }
+
 OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
 {
     OPERATE_RET rt = OPRT_OK;
@@ -90,10 +67,10 @@ OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
     }
 
     /* Acquire printer lock to prevent concurrent access */
-    OPERATE_RET lock_rt = __printer_lock_acquire();
-    if (lock_rt != OPRT_OK) {
-        PR_WARN("print: printer is busy, rejecting request");
-        return OPRT_COM_ERROR;
+    rt = __printer_lock_acquire();
+    if (rt != OPRT_OK) {
+        PR_WARN("print: failed to acquire lock, rt:%d", rt);
+        return rt;
     }
 
     /* Reject non-JPEG payloads up front. The image album can now hold both
@@ -114,13 +91,25 @@ OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
     }
 
     TAL_IMAGE_JPEG_INFO_T jpeg_info = {0};
-    TUYA_CALL_ERR_RETURN(tal_image_jpeg_get_info(jpeg, len, &jpeg_info));
-
-    if (NULL == sg_printer_hdl) {
-        TUYA_CALL_ERR_RETURN(tdl_printer_find(PRINTER_NAME, &sg_printer_hdl));
+    rt = tal_image_jpeg_get_info(jpeg, len, &jpeg_info);
+    if (rt != OPRT_OK) {
+        __printer_lock_release();
+        return rt;
     }
 
-    TUYA_CALL_ERR_RETURN(tdl_printer_open(sg_printer_hdl, NULL));
+    if (NULL == sg_printer_hdl) {
+        rt = tdl_printer_find(PRINTER_NAME, &sg_printer_hdl);
+        if (rt != OPRT_OK) {
+            __printer_lock_release();
+            return rt;
+        }
+    }
+
+    rt = tdl_printer_open(sg_printer_hdl, NULL);
+    if (rt != OPRT_OK) {
+        __printer_lock_release();
+        return rt;
+    }
 
     TDL_PRINTER_DEV_INFO_T dev_info = {0};
     tdl_printer_get_dev_info(sg_printer_hdl, &dev_info);
@@ -177,7 +166,6 @@ OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
     }
 
     tdl_printer_end(sg_printer_hdl);
-
     tdl_printer_close(sg_printer_hdl);
 
     __printer_lock_release();
