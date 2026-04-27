@@ -1,0 +1,9 @@
+menu "configure app (your_photo_ai)"
+
+config TUYA_PRODUCT_ID
+    string "product ID"
+    default "your_product_id_here"
+
+rsource "../ai_components/Kconfig"
+
+endmenu
