@@ -34,3 +34,4 @@ target_include_directories(${EXAMPLE_LIB}
 ########################################
 
 add_subdirectory(${APP_PATH}/../ai_components)
+add_subdirectory(${APP_PATH}/src/display)

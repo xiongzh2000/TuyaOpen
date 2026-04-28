@@ -5,6 +5,7 @@
 #include "app_scene_chat.h"
 #include "app_scene_recognize.h"
 #include "app_scene_effect.h"
+#include "app_display.h"
 
 #if defined(ENABLE_WIFI) && (ENABLE_WIFI == 1)
 #include "tkl_wifi.h"
@@ -74,6 +75,10 @@ OPERATE_RET app_photo_main_init(void)
         .evt_cb       = __ai_event_handler,
     };
     TUYA_CALL_ERR_RETURN(ai_chat_init(&cfg));
+
+#if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
+    TUYA_CALL_ERR_RETURN(app_display_init());
+#endif
 
 #if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
     app_ui_action_register();
