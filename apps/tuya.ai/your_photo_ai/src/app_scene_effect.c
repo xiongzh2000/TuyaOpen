@@ -130,13 +130,9 @@ void app_scene_effect_apply_style(const char *style)
     /* add source photo to input queue */
     TUYA_CALL_ERR_LOG(ai_picture_input_add_from_album(sg_current_photo, NULL));
 
-    /* build trigger param JSON with style */
-    char param[256] = {0};
-    snprintf(param, sizeof(param),
-             "{\"style\":\"%s\""
-             ",\"sys.device.img_resize.width\":%d"
-             ",\"sys.device.img_resize.height\":%d}",
-             style, EFFECT_OUTPUT_WIDTH, EFFECT_OUTPUT_HEIGHT);
+    /* build trigger param JSON with style — values must use {"value": ...} wrapper */
+    char param[128] = {0};
+    snprintf(param, sizeof(param), "{\"app.effect.style\":{\"value\":\"%s\"}}", style);
 
     /* trigger generateImage */
     rt = tuya_ai_agent_trigger(NULL, "generateImage", param);
