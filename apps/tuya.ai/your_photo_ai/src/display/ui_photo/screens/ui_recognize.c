@@ -13,6 +13,7 @@ static TAL_IMAGE_SCALE_OUT_T sg_scale_out = {0};
 
 void ui_recognize_init(lv_obj_t *parent)
 {
+    if (!parent) return;
     sg_container = lv_obj_create(parent);
     lv_obj_set_size(sg_container, lv_obj_get_width(parent), lv_obj_get_height(parent));
     lv_obj_set_style_bg_color(sg_container, lv_color_hex(0x0d0d1a), 0);
