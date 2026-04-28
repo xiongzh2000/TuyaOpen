@@ -45,6 +45,7 @@ void ui_chat_set_visible(bool visible)
 
 static lv_obj_t *__add_bubble(const char *text, lv_color_t bg, lv_align_t align)
 {
+    if (!sg_msg_list) return NULL;
     lv_obj_t *row = lv_obj_create(sg_msg_list);
     lv_obj_set_size(row, lv_pct(100), LV_SIZE_CONTENT);
     lv_obj_set_style_bg_opa(row, 0, 0);
@@ -101,7 +102,7 @@ void ui_chat_stream_finish(void)
 
 void ui_chat_append_system(const char *msg)
 {
-    if (!msg) return;
+    if (!msg || !sg_msg_list) return;
     lv_obj_t *lbl = lv_label_create(sg_msg_list);
     lv_label_set_text(lbl, msg);
     lv_obj_set_style_text_color(lbl, lv_color_hex(0x888888), 0);
