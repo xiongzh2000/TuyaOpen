@@ -78,10 +78,6 @@ static void __ai_ui_action_task(void *args)
         memset(&msg_data, 0, sizeof(AI_UI_ACTION_MSG_T));
         tal_queue_fetch(sg_action_queue_hdl, &msg_data, SEM_WAIT_FOREVER);
 
-        if (msg_data.action >= AI_UI_ACT_MAX) {
-            continue;
-        }
-
         if (sg_action_cb != NULL) {
             sg_action_cb(msg_data.action, msg_data.data, msg_data.len);
         }
