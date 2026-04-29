@@ -13,8 +13,10 @@ void ui_effect_init(lv_obj_t *parent)
 {
     if (!parent) return;
     sg_container = lv_obj_create(parent);
-    lv_obj_set_size(sg_container, lv_obj_get_width(parent), lv_obj_get_height(parent));
+    lv_obj_set_size(sg_container, lv_pct(100), lv_pct(100));
     lv_obj_set_style_bg_color(sg_container, lv_color_hex(0x0d0d1a), 0);
+    lv_obj_set_style_pad_all(sg_container, 0, 0);
+    lv_obj_set_style_border_width(sg_container, 0, 0);
     lv_obj_clear_flag(sg_container, LV_OBJ_FLAG_SCROLLABLE);
 
     /* Top button row: camera / album */
@@ -23,6 +25,7 @@ void ui_effect_init(lv_obj_t *parent)
     lv_obj_align(btn_row, LV_ALIGN_TOP_LEFT, 0, 0);
     lv_obj_set_style_bg_opa(btn_row, 0, 0);
     lv_obj_set_style_border_width(btn_row, 0, 0);
+    lv_obj_set_style_pad_all(btn_row, 2, 0);
     lv_obj_set_flex_flow(btn_row, LV_FLEX_FLOW_ROW);
 
     lv_obj_t *b1 = lv_btn_create(btn_row);
@@ -51,6 +54,7 @@ void ui_effect_init(lv_obj_t *parent)
     lv_obj_align(style_row, LV_ALIGN_TOP_LEFT, 0, 150);
     lv_obj_set_style_bg_opa(style_row, 0, 0);
     lv_obj_set_style_border_width(style_row, 0, 0);
+    lv_obj_set_style_pad_all(style_row, 2, 0);
     lv_obj_set_flex_flow(style_row, LV_FLEX_FLOW_ROW);
 
     for (int i = 0; i < 4; i++) {

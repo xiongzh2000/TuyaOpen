@@ -9,14 +9,17 @@ static lv_obj_t *sg_thumbnail_img  = NULL;
 static lv_obj_t *sg_result_label   = NULL;
 static lv_obj_t *sg_continue_btn   = NULL;
 static lv_obj_t *sg_canvas          = NULL;
+static lv_obj_t *sg_camera_overlay = NULL;
 static TAL_IMAGE_SCALE_OUT_T sg_scale_out = {0};
 
 void ui_recognize_init(lv_obj_t *parent)
 {
     if (!parent) return;
     sg_container = lv_obj_create(parent);
-    lv_obj_set_size(sg_container, lv_obj_get_width(parent), lv_obj_get_height(parent));
+    lv_obj_set_size(sg_container, lv_pct(100), lv_pct(100));
     lv_obj_set_style_bg_color(sg_container, lv_color_hex(0x0d0d1a), 0);
+    lv_obj_set_style_pad_all(sg_container, 0, 0);
+    lv_obj_set_style_border_width(sg_container, 0, 0);
     lv_obj_clear_flag(sg_container, LV_OBJ_FLAG_SCROLLABLE);
 
     /* Top button row */
@@ -25,6 +28,7 @@ void ui_recognize_init(lv_obj_t *parent)
     lv_obj_align(btn_row, LV_ALIGN_TOP_LEFT, 0, 0);
     lv_obj_set_style_bg_opa(btn_row, 0, 0);
     lv_obj_set_style_border_width(btn_row, 0, 0);
+    lv_obj_set_style_pad_all(btn_row, 2, 0);
     lv_obj_set_flex_flow(btn_row, LV_FLEX_FLOW_ROW);
 
     lv_obj_t *btn_cam = lv_btn_create(btn_row);
@@ -68,8 +72,27 @@ void ui_recognize_set_visible(bool visible)
     else         lv_obj_add_flag(sg_container, LV_OBJ_FLAG_HIDDEN);
 }
 
-void ui_recognize_show_camera(void)  {}
-void ui_recognize_hide_camera(void)  {}
+void ui_recognize_show_camera(void)
+{
+    if (!sg_container || sg_camera_overlay) return;
+    sg_camera_overlay = lv_obj_create(sg_container);
+    lv_obj_set_size(sg_camera_overlay, lv_pct(100), lv_pct(100));
+    lv_obj_align(sg_camera_overlay, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_bg_color(sg_camera_overlay, lv_color_hex(0x111122), 0);
+    lv_obj_set_style_bg_opa(sg_camera_overlay, LV_OPA_90, 0);
+    lv_obj_t *lbl = lv_label_create(sg_camera_overlay);
+    lv_label_set_text(lbl, "对准目标后点击拍照");
+    lv_obj_center(lbl);
+    lv_obj_set_style_text_color(lbl, lv_color_white(), 0);
+}
+
+void ui_recognize_hide_camera(void)
+{
+    if (sg_camera_overlay) {
+        lv_obj_del(sg_camera_overlay);
+        sg_camera_overlay = NULL;
+    }
+}
 
 void ui_recognize_show_thumbnail(const uint8_t *jpeg, uint32_t len)
 {

@@ -7,6 +7,11 @@
 
 #include "ui.h"
 
+#if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
+#include "ai_picture.h"
+#include "image_album.h"
+#endif
+
 typedef struct {
     uint32_t type;
     int      len;
@@ -21,6 +26,7 @@ typedef struct {
 } PHOTO_DISPLAY_T;
 
 static PHOTO_DISPLAY_T sg_disp = {0};
+static volatile bool sg_disp_inited = false;
 
 #define DISP_TYPE(tab, cmd) (((tab) << 16) | (cmd))
 #define DISP_TAB(type)      (((type) >> 16) & 0xFF)
@@ -92,7 +98,11 @@ static void __process_msg(DISP_MSG_T *msg)
         switch (cmd) {
         case CMD_CAM_OPEN:  ui_recognize_camera_open();                      break;
         case CMD_CAM_CLOSE: ui_recognize_camera_close();                     break;
-        case CMD_CAM_THUMB: ui_recognize_set_thumbnail(msg->data, msg->len); break;
+        case CMD_CAM_THUMB:
+            ui_recognize_camera_close();
+            ui_recognize_set_thumbnail(msg->data, msg->len);
+            ui_effect_set_source(msg->data, msg->len);
+            break;
         default: break;
         }
     } else if (tab == TAB_ALBUM) {
@@ -109,7 +119,12 @@ static void __disp_task(void *arg)
 {
     (void)arg;
     tuya_lvgl_init();
+
+    PR_NOTICE("disp_task: lvgl init done, calling ui_init");
+    tuya_lvgl_mutex_lock();
     ui_init();
+    tuya_lvgl_mutex_unlock();
+    PR_NOTICE("disp_task: ui_init done");
 
     while (1) {
         DISP_MSG_T msg = {0};
@@ -149,7 +164,24 @@ static void __chat_system_msg(char *s)
     { __enqueue(DISP_TYPE(TAB_CHAT, CMD_SYSTEM_MSG), (uint8_t *)s, s ? (int)strlen(s) : 0); }
 static void __chat_image(AI_UI_IMG_T *img)      { (void)img; }
 static void __chat_link(bool is_ai, char *text, AI_UI_CHAT_LINK_CB cb, void *arg, uint32_t len)
-    { (void)is_ai; (void)text; (void)cb; (void)arg; (void)len; }
+{
+    (void)text; (void)cb;
+#if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
+    if (is_ai && arg && len > 0) {
+        IMAGE_ALBUM_HANDLE hdl = image_album_find_by_name(ai_picture_get_album_name());
+        uint8_t *jpeg_data = NULL;
+        size_t   jpeg_size = 0;
+        if (hdl && OPRT_OK == image_album_read(hdl, (char *)arg, 0, &jpeg_data, &jpeg_size) && jpeg_data) {
+            tuya_lvgl_mutex_lock();
+            ui_effect_set_result_image(jpeg_data, (uint32_t)jpeg_size);
+            tuya_lvgl_mutex_unlock();
+            image_album_free_file_data(jpeg_data);
+        }
+    }
+#else
+    (void)is_ai; (void)arg; (void)len;
+#endif
+}
 static void __chat_add_attach(AI_UI_IMG_T *img) { (void)img; }
 static void __chat_clear_attach(void)           {}
 
@@ -159,7 +191,11 @@ static void __cam_close(void)
     { __enqueue(DISP_TYPE(TAB_CAMERA, CMD_CAM_CLOSE), NULL, 0); }
 static void __cam_thumb(uint8_t *jpeg, uint32_t len)
     { __enqueue(DISP_TYPE(TAB_CAMERA, CMD_CAM_THUMB), jpeg, (int)len); }
-static void __cam_yuv_flush(AI_UI_VIDEO_T *v) { (void)v; }
+static void __cam_yuv_flush(AI_UI_VIDEO_T *v)
+{
+    if (!v || !v->yuv422 || v->width == 0 || v->height == 0) return;
+    ui_recognize_camera_yuv_flush(v->yuv422, v->width, v->height);
+}
 
 static void __album_open(void)
     { __enqueue(DISP_TYPE(TAB_ALBUM, CMD_ALBUM_OPEN), NULL, 0); }
@@ -173,6 +209,9 @@ static void __album_select_thumb(AI_UI_IMG_T *arr, uint32_t cnt, uint8_t max)
 OPERATE_RET app_display_init(void)
 {
     OPERATE_RET rt = OPRT_OK;
+
+    if (sg_disp_inited) return OPRT_OK;
+    sg_disp_inited = true;
 
     TUYA_CALL_ERR_RETURN(tal_queue_create_init(&sg_disp.queue_hdl, sizeof(DISP_MSG_T), DISP_QUEUE_SIZE));
 

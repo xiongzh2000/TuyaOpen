@@ -1,7 +1,7 @@
 /**
  * @file app_scene_recognize.c
  * @brief Recognize scene: take photo or pick album image → AI image recognition.
- *        Injects ai_image intent via EVENT_AI_SESSION_NEW ONETIME subscription.
+ *        Injects ai_image intent via tuya_ai_agent_set_event_param before input_start.
  * @version 0.1
  * @copyright Copyright (c) 2021-2026 Tuya Inc. All Rights Reserved.
  */
@@ -11,7 +11,6 @@
 #include <string.h>
 
 #include "tal_api.h"
-#include "tal_event.h"
 #include "tuya_ai_biz.h"
 #include "tuya_ai_agent.h"
 #include "ai_ui_manage.h"
@@ -38,31 +37,25 @@ static char sg_current_photo[AI_PICTURE_NAME_MAX_LEN + 1] = {0};
 ***********************function define**********************
 ***********************************************************/
 
-/**
- * @brief ONETIME event callback: inject event_param on next AI session new
- */
-static int __recognize_set_event_param_cb(void *data)
+void app_scene_recognize_submit(void *data)
 {
     (void)data;
-    tuya_ai_agent_set_event_param(RECOGNIZE_EVENT_PARAM);
-    PR_DEBUG("[scene_recognize] event_param injected");
-    return 0;
-}
-
-/**
- * @brief Subscribe intent ONETIME and send current photo to AI pipeline
- */
-static void __recognize_submit_photo(void)
-{
     OPERATE_RET rt = OPRT_OK;
 
-    TUYA_CALL_ERR_LOG(tal_event_subscribe(EVENT_AI_SESSION_NEW,
-                                          "recognize_set_event_param",
-                                          __recognize_set_event_param_cb,
-                                          SUBSCRIBE_TYPE_ONETIME));
+    if (sg_current_photo[0] == '\0') {
+        PR_ERR("[scene_recognize] submit: no photo");
+        return;
+    }
+
+    PR_NOTICE("[scene_recognize] submit start: %s", sg_current_photo);
+    tuya_ai_agent_set_event_param(RECOGNIZE_EVENT_PARAM);
 
     TUYA_CALL_ERR_LOG(ai_picture_input_add_from_album(sg_current_photo, NULL));
+    tuya_ai_input_start(true);
     TUYA_CALL_ERR_LOG(ai_picture_input_from_album());
+    tuya_ai_input_stop();
+    ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)"STANDBY", 7);
+    PR_NOTICE("[scene_recognize] submit done");
 }
 
 OPERATE_RET app_scene_recognize_init(void)
@@ -96,9 +89,6 @@ void app_scene_recognize_take_photo(void)
     ai_ui_disp_msg(AI_UI_DISP_CAMERA_THUMB, jpeg, (int)jpeg_len);
 
     ai_video_jpeg_image_free(&jpeg);
-
-    /* subscribe intent + send */
-    __recognize_submit_photo();
 }
 
 void app_scene_recognize_pick_album(const char *name)
@@ -111,8 +101,6 @@ void app_scene_recognize_pick_album(const char *name)
     PR_DEBUG("[scene_recognize] pick_album: %s", name);
     strncpy(sg_current_photo, name, AI_PICTURE_NAME_MAX_LEN);
     sg_current_photo[AI_PICTURE_NAME_MAX_LEN] = '\0';
-
-    __recognize_submit_photo();
 }
 
 void app_scene_recognize_continue_chat(void)

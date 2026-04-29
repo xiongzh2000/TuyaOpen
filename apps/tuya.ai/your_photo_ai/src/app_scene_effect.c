@@ -13,7 +13,6 @@
 #include <stdio.h>
 
 #include "tal_api.h"
-#include "tal_event.h"
 #include "tuya_ai_biz.h"
 #include "tuya_ai_agent.h"
 #include "ai_ui_manage.h"
@@ -46,20 +45,12 @@
 /* current source photo album filename */
 static char sg_current_photo[AI_PICTURE_NAME_MAX_LEN + 1] = {0};
 
+/* style name for pending submission (set before workq dispatch) */
+static char sg_pending_style[64] = {0};
+
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
-
-/**
- * @brief ONETIME event callback: inject generateImage event_param on next AI session
- */
-static int __effect_set_event_param_cb(void *data)
-{
-    (void)data;
-    tuya_ai_agent_set_event_param(EFFECT_EVENT_PARAM);
-    PR_DEBUG("[scene_effect] event_param injected (generateImage)");
-    return 0;
-}
 
 OPERATE_RET app_scene_effect_init(void)
 {
@@ -110,8 +101,6 @@ void app_scene_effect_pick_album(const char *name)
 
 void app_scene_effect_apply_style(const char *style)
 {
-    OPERATE_RET rt = OPRT_OK;
-
     if (NULL == style || style[0] == '\0') {
         PR_ERR("[scene_effect] apply_style: invalid style");
         return;
@@ -123,22 +112,40 @@ void app_scene_effect_apply_style(const char *style)
     }
 
     PR_DEBUG("[scene_effect] apply_style: %s on photo: %s", style, sg_current_photo);
+    snprintf(sg_pending_style, sizeof(sg_pending_style), "%s", style);
+}
 
-    /* set desired output size */
+void app_scene_effect_submit_style(void *data)
+{
+    (void)data;
+    OPERATE_RET rt = OPRT_OK;
+
+    if (sg_pending_style[0] == '\0' || sg_current_photo[0] == '\0') {
+        PR_ERR("[scene_effect] submit_style: missing style or photo");
+        return;
+    }
+
+    PR_NOTICE("[scene_effect] submit_style start: style=%s, photo=%s", sg_pending_style, sg_current_photo);
+
     TUYA_CALL_ERR_LOG(ai_picture_output_set_size(EFFECT_OUTPUT_WIDTH, EFFECT_OUTPUT_HEIGHT));
 
-    /* add source photo to input queue */
     TUYA_CALL_ERR_LOG(ai_picture_input_add_from_album(sg_current_photo, NULL));
 
-    /* build trigger param JSON with style — values must use {"value": ...} wrapper */
-    char param[128] = {0};
-    snprintf(param, sizeof(param), "{\"app.effect.style\":{\"value\":\"%s\"}}", style);
+    char event_param[256] = {0};
+    snprintf(event_param, sizeof(event_param),
+             "{\"sys.device.clm.intent\":{\"value\":\"generateImage\"}"
+             ",\"sys.device.img_resize.width\":{\"value\":%d}"
+             ",\"sys.device.img_resize.height\":{\"value\":%d}"
+             ",\"app.effect.style\":{\"value\":\"%s\"}}",
+             EFFECT_OUTPUT_WIDTH, EFFECT_OUTPUT_HEIGHT, sg_pending_style);
+    tuya_ai_agent_set_event_param(event_param);
 
-    /* trigger generateImage */
-    rt = tuya_ai_agent_trigger(NULL, "generateImage", param);
-    if (OPRT_OK != rt) {
-        PR_ERR("[scene_effect] trigger generateImage failed: %d", rt);
-    }
+    tuya_ai_input_start(true);
+    TUYA_CALL_ERR_LOG(ai_picture_input_from_album());
+    tuya_ai_input_stop();
+    ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)"STANDBY", 7);
+
+    PR_NOTICE("[scene_effect] submit_style done");
 }
 
 void app_scene_effect_prepare_voice(void)
@@ -152,16 +159,10 @@ void app_scene_effect_prepare_voice(void)
 
     PR_DEBUG("[scene_effect] prepare_voice: inject intent + queue photo");
 
-    /* subscribe ONETIME to inject generateImage intent on next AI session */
-    TUYA_CALL_ERR_LOG(tal_event_subscribe(EVENT_AI_SESSION_NEW,
-                                          "effect_set_event_param",
-                                          __effect_set_event_param_cb,
-                                          SUBSCRIBE_TYPE_ONETIME));
-
-    /* set output size */
     TUYA_CALL_ERR_LOG(ai_picture_output_set_size(EFFECT_OUTPUT_WIDTH, EFFECT_OUTPUT_HEIGHT));
 
-    /* add source photo to input queue; it will be sent when voice session starts */
+    tuya_ai_agent_set_event_param(EFFECT_EVENT_PARAM);
+
     TUYA_CALL_ERR_LOG(ai_picture_input_add_from_album(sg_current_photo, NULL));
 }
 

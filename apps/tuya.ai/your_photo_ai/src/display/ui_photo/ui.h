@@ -16,9 +16,11 @@ void ui_chat_stream_end(void);
 void ui_chat_set_system_msg(const char *msg);
 void ui_recognize_camera_open(void);
 void ui_recognize_camera_close(void);
+void ui_recognize_camera_yuv_flush(const uint8_t *yuv422, uint32_t w, uint32_t h);
 void ui_recognize_set_thumbnail(const uint8_t *jpeg, uint32_t len);
 void ui_recognize_set_result(const char *text);
 void ui_effect_album_open(void);
 void ui_effect_album_close(void);
 void ui_effect_set_result_image(const uint8_t *jpeg, uint32_t len);
+void ui_effect_set_source(const uint8_t *jpeg, uint32_t len);
 #endif

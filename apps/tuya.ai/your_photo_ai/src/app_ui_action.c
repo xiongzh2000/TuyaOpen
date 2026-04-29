@@ -28,6 +28,9 @@
 
 #include "tdl_button_manage.h"
 #include "ai_manage_mode.h"
+#include "ai_audio_player.h"
+#include "tuya_ai_agent.h"
+#include "tal_workq_service.h"
 
 /***********************************************************
 ************************macro define************************
@@ -41,8 +44,12 @@
 ***********************variable define**********************
 ***********************************************************/
 
+/* true when recognize camera is in preview mode */
+static bool sg_recog_camera_preview = false;
 /* true when effect scene has armed voice capture */
 static bool sg_effect_voice_pending = false;
+/* true when effect camera is in preview mode */
+static bool sg_effect_camera_preview = false;
 
 /***********************************************************
 ***********************function define**********************
@@ -97,27 +104,52 @@ static void __app_ui_action_handle(AI_UI_ACTION_E raw_action, uint8_t *data, uin
 
     /* ── scene switch ──────────────────────────────────────────── */
     case APP_ACT_SWITCH_CHAT:
+#if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
+        if (sg_recog_camera_preview) {
+            __camera_close();
+            sg_recog_camera_preview = false;
+        }
+        if (sg_effect_camera_preview) {
+            __camera_close();
+            sg_effect_camera_preview = false;
+        }
+#endif
         ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)"STANDBY", 7);
         break;
 
     case APP_ACT_SWITCH_RECOGNIZE:
-        /* nothing extra on switch */
+#if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
+        if (sg_effect_camera_preview) {
+            __camera_close();
+            sg_effect_camera_preview = false;
+        }
+#endif
         break;
 
     case APP_ACT_SWITCH_EFFECT:
+#if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
+        if (sg_recog_camera_preview) {
+            __camera_close();
+            sg_recog_camera_preview = false;
+        }
+#endif
         sg_effect_voice_pending = false;
+        sg_effect_camera_preview = false;
         break;
 
     /* ── HOLD voice (shared across scenes) ─────────────────────── */
     case APP_ACT_HOLD_START:
+        PR_NOTICE("[action] HOLD_START, voice_pending=%d", sg_effect_voice_pending);
+        ai_audio_player_stop(AI_AUDIO_PLAYER_ALL);
+        tuya_ai_agent_event(AI_EVENT_CHAT_BREAK, 0);
         if (sg_effect_voice_pending) {
-            /* effect scene armed voice — inject intent before session starts */
             app_scene_effect_prepare_voice();
         }
         ai_mode_handle_key(TDL_BUTTON_LONG_PRESS_START, NULL);
         break;
 
     case APP_ACT_HOLD_END:
+        PR_NOTICE("[action] HOLD_END");
         ai_mode_handle_key(TDL_BUTTON_PRESS_UP, NULL);
         sg_effect_voice_pending = false;
         break;
@@ -125,9 +157,18 @@ static void __app_ui_action_handle(AI_UI_ACTION_E raw_action, uint8_t *data, uin
     /* ── recognize scene ──────────────────────────────────────── */
     case APP_ACT_RECOGNIZE_TAKE_PHOTO:
 #if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
-        __camera_open();
-        app_scene_recognize_take_photo();   /* captures frame, saves, submits */
-        __camera_close();
+        if (!sg_recog_camera_preview) {
+            PR_NOTICE("[action] RECOG camera open");
+            __camera_open();
+            sg_recog_camera_preview = true;
+        } else {
+            PR_NOTICE("[action] RECOG take photo + submit");
+            app_scene_recognize_take_photo();
+            __camera_close();
+            sg_recog_camera_preview = false;
+            OPERATE_RET wq_rt = tal_workq_schedule(WORKQ_SYSTEM, app_scene_recognize_submit, NULL);
+            PR_NOTICE("[action] RECOG workq_schedule ret=%d", wq_rt);
+        }
 #endif
         break;
 
@@ -150,11 +191,16 @@ static void __app_ui_action_handle(AI_UI_ACTION_E raw_action, uint8_t *data, uin
     /* ── effect scene ─────────────────────────────────────────── */
     case APP_ACT_EFFECT_TAKE_PHOTO:
 #if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
-        __camera_open();
-        app_scene_effect_take_photo();      /* captures frame, saves, shows thumbnail */
-        __camera_close();
+        if (!sg_effect_camera_preview) {
+            __camera_open();
+            sg_effect_camera_preview = true;
+        } else {
+            app_scene_effect_take_photo();
+            __camera_close();
+            sg_effect_camera_preview = false;
+            sg_effect_voice_pending = true;
+        }
 #endif
-        sg_effect_voice_pending = true;     /* user can now speak a style */
         break;
 
     case APP_ACT_EFFECT_PICK_ALBUM: {
@@ -174,6 +220,8 @@ static void __app_ui_action_handle(AI_UI_ACTION_E raw_action, uint8_t *data, uin
             char style[64] = {0};
             snprintf(style, sizeof(style), "%.*s", (int)len, (char *)data);
             app_scene_effect_apply_style(style);
+            tal_workq_schedule(WORKQ_SYSTEM, app_scene_effect_submit_style, NULL);
+            sg_effect_voice_pending = false;
         }
         break;
 

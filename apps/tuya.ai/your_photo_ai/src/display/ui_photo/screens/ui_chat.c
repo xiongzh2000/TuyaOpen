@@ -13,21 +13,25 @@ static char      sg_stream_buf[CHAT_MSG_MAX_LEN];
 void ui_chat_init(lv_obj_t *parent)
 {
     sg_container = lv_obj_create(parent);
-    lv_obj_set_size(sg_container, lv_obj_get_width(parent), lv_obj_get_height(parent));
-    lv_obj_align(sg_container, LV_ALIGN_TOP_LEFT, 0, 0);
+    lv_obj_set_size(sg_container, lv_pct(100), lv_pct(100));
     lv_obj_set_style_bg_color(sg_container, lv_color_hex(0x0d0d1a), 0);
+    lv_obj_set_style_pad_all(sg_container, 0, 0);
+    lv_obj_set_style_border_width(sg_container, 0, 0);
     lv_obj_set_flex_flow(sg_container, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(sg_container, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
 
     sg_msg_list = lv_obj_create(sg_container);
     lv_obj_set_size(sg_msg_list, lv_pct(100), LV_SIZE_CONTENT);
     lv_obj_set_flex_grow(sg_msg_list, 1);
     lv_obj_set_flex_flow(sg_msg_list, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_style_bg_color(sg_msg_list, lv_color_hex(0x0d0d1a), 0);
+    lv_obj_set_style_pad_all(sg_msg_list, 4, 0);
+    lv_obj_set_style_pad_row(sg_msg_list, 6, 0);
+    lv_obj_set_style_border_width(sg_msg_list, 0, 0);
     lv_obj_set_scroll_dir(sg_msg_list, LV_DIR_VER);
 
     sg_hold_btn = lv_btn_create(sg_container);
     lv_obj_set_size(sg_hold_btn, lv_pct(80), 50);
-    lv_obj_align(sg_hold_btn, LV_ALIGN_BOTTOM_MID, 0, -8);
     lv_obj_set_style_bg_color(sg_hold_btn, lv_palette_main(LV_PALETTE_BLUE), 0);
     lv_obj_add_event_cb(sg_hold_btn, btn_hold_pressed,  LV_EVENT_PRESSED,  NULL);
     lv_obj_add_event_cb(sg_hold_btn, btn_hold_released, LV_EVENT_RELEASED, NULL);
@@ -50,6 +54,7 @@ static lv_obj_t *__add_bubble(const char *text, lv_color_t bg, lv_align_t align)
     lv_obj_set_size(row, lv_pct(100), LV_SIZE_CONTENT);
     lv_obj_set_style_bg_opa(row, 0, 0);
     lv_obj_set_style_border_width(row, 0, 0);
+    lv_obj_set_style_pad_all(row, 0, 0);
     lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t *bubble = lv_label_create(row);

@@ -18,6 +18,9 @@
 
 #if defined(ENABLE_PRINTER) && (ENABLE_PRINTER == 1)
 #include "app_printer.h"
+#if defined(ENABLE_COMP_AI_PICTURE_HOSTING_DLD) && (ENABLE_COMP_AI_PICTURE_HOSTING_DLD == 1)
+#include "tuya_file_storage_dld.h"
+#endif
 #endif
 
 /***********************************************************
@@ -109,9 +112,15 @@ static void __ai_chat_handle_event(AI_NOTIFY_EVENT_T *event)
 {
     switch(event->type) {
         #if defined(ENABLE_PRINTER) && (ENABLE_PRINTER == 1)
-        case AI_USER_EVT_GENERATE_PICTURE:
-        case AI_USER_EVT_GET_PICTURE_FROM_APP: {
+        case AI_USER_EVT_GENERATE_PICTURE: {
             app_print_img_from_album((const char *)event->data);
+        } break;
+        case AI_USER_EVT_GET_PICTURE_FROM_APP: {
+            OPERATE_RET print_rt = app_print_img_from_album((const char *)event->data);
+            #if defined(ENABLE_COMP_AI_PICTURE_HOSTING_DLD) && (ENABLE_COMP_AI_PICTURE_HOSTING_DLD == 1)
+            tuya_file_storage_dl_mq_rept(NULL, (char *)event->data, NULL,
+                                         (print_rt == OPRT_OK) ? "printFinished" : "printError");
+            #endif
         } break;
         #endif
         default:

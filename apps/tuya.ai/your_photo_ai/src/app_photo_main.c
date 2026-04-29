@@ -69,6 +69,11 @@ static void __ai_event_handler(AI_NOTIFY_EVENT_T *event)
 OPERATE_RET app_photo_main_init(void)
 {
     OPERATE_RET rt = OPRT_OK;
+
+    /* Force HOLD mode — KV may have stale ONESHOT value from previous builds */
+    const char *hold_cfg = "{\"volume\": 70, \"chat_mode\":0}";
+    tal_kv_set("ai_toy", (const uint8_t *)hold_cfg, strlen(hold_cfg));
+
     AI_CHAT_MODE_CFG_T cfg = {
         .default_mode = AI_CHAT_MODE_HOLD,
         .default_vol  = 70,
