@@ -35,6 +35,9 @@
 #if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
 static bool sg_ai_vision_enabled = false;
 #endif
+#if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
+static bool sg_img2img_pending = false;
+#endif
 
 /***********************************************************
 ***********************function define**********************
@@ -79,6 +82,17 @@ static void __app_ui_action_handle(AI_UI_ACTION_E action, uint8_t *data, uint32_
             char name[AI_PICTURE_NAME_MAX_LEN + 1] = {0};
             ai_picture_save_to_album(jpeg, jpeg_len, NULL, name);
             ai_ui_disp_msg_sync(AI_UI_DISP_CAMERA_THUMB, jpeg, jpeg_len);
+            if (sg_img2img_pending) {
+                sg_img2img_pending = false;
+                ai_video_stop();
+                ai_video_set_yuv_frame_flush_cb(NULL);
+                ai_ui_disp_msg_sync(AI_UI_DISP_CAMERA_CLOSE, NULL, 0);
+                ai_picture_input_add_from_album(name, NULL);
+                ai_ui_disp_msg(AI_UI_DISP_NOTIFICATION,
+                               (uint8_t *)IMG2IMG_READY, strlen(IMG2IMG_READY));
+                ai_video_jpeg_image_free(&jpeg);
+                break;
+            }
 #endif
             if (sg_ai_vision_enabled) {
                 /* Close camera so the user sees the AI response in chat */
@@ -102,6 +116,9 @@ static void __app_ui_action_handle(AI_UI_ACTION_E action, uint8_t *data, uint32_
         ai_video_stop();
         ai_video_set_yuv_frame_flush_cb(NULL);
         ai_ui_disp_msg_sync(AI_UI_DISP_CAMERA_CLOSE, NULL, 0);
+#if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
+        sg_img2img_pending = false;
+#endif
         break;
 
     case AI_UI_ACT_CAMERA_AI_ON:
@@ -111,6 +128,16 @@ static void __app_ui_action_handle(AI_UI_ACTION_E action, uint8_t *data, uint32_
     case AI_UI_ACT_CAMERA_AI_OFF:
         sg_ai_vision_enabled = false;
         break;
+
+    case AI_UI_ACT_IMG2IMG_FROM_CAMERA:
+#if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
+        sg_img2img_pending = true;
+#endif
+        ai_video_set_yuv_frame_flush_cb(__display_camera_yuv_fram);
+        ai_video_start();
+        ai_ui_disp_msg_sync(AI_UI_DISP_CAMERA_OPEN, NULL, 0);
+        break;
+
 #endif /* ENABLE_COMP_AI_VIDEO */
 
 #if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
@@ -162,15 +189,26 @@ static void __app_ui_action_handle(AI_UI_ACTION_E action, uint8_t *data, uint32_
 
     case AI_UI_ACT_CLOSE_ALBUM:
         ai_ui_disp_msg_sync(AI_UI_DISP_ALBUM_CLOSE, NULL, 0);
+        sg_img2img_pending = false;
         break;
 
     case AI_UI_ACT_OPEN_IMG_ATTACH_LIST:
         ai_ui_disp_msg_sync(AI_UI_DISP_ALBUM_SELECT_IMG, NULL, 0);
         break;
 
+    case AI_UI_ACT_IMG2IMG_FROM_ALBUM:
+        sg_img2img_pending = true;
+        ai_ui_disp_msg_sync(AI_UI_DISP_ALBUM_SELECT_IMG, NULL, 0);
+        break;
+
     case AI_UI_ACT_ADD_IMG_ATTACH: {
         ai_ui_disp_msg_sync(AI_UI_DISP_ADD_CHAT_ATTACH_IMG, data, strlen((char *)data));
         ai_picture_input_add_from_album((char *)data, NULL);
+        if (sg_img2img_pending) {
+            sg_img2img_pending = false;
+            ai_ui_disp_msg(AI_UI_DISP_NOTIFICATION,
+                           (uint8_t *)IMG2IMG_READY, strlen(IMG2IMG_READY));
+        }
     } break;
 
     case AI_UI_ACT_DEL_IMG_ATTACH: {
