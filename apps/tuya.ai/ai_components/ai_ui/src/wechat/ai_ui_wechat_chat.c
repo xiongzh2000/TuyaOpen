@@ -399,6 +399,9 @@ static void __popup_add_img_cb(lv_event_t *e)
 static void __popup_img2img_cb(lv_event_t *e)
 {
     (void)e;
+    if (!sg_chat.img2img_popup) {
+        return;
+    }
     lv_obj_add_flag(sg_chat.popup_menu, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(sg_chat.img2img_popup, LV_OBJ_FLAG_HIDDEN);
     lv_obj_move_foreground(sg_chat.img2img_popup);
