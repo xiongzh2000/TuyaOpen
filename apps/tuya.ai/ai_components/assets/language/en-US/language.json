@@ -52,6 +52,11 @@
         "SELECT_TEXT":"Select",
         "DELETE_TEXT":"Delete",
         "CONFIRM_TEXT":"Confirm",
-        "RECOGNIZE_IMAGE_PROMPT":"explain the content of the uploaded image, do not trigger MCP skills, do not call MCP tools"
+        "RECOGNIZE_IMAGE_PROMPT":"explain the content of the uploaded image, do not trigger MCP skills, do not call MCP tools",
+
+        "IMG2IMG":"Img2Img",
+        "IMG2IMG_CAMERA":"Take Photo",
+        "IMG2IMG_ALBUM":"From Album",
+        "IMG2IMG_READY":"Image ready, please say your edit instruction"
     }
 }
