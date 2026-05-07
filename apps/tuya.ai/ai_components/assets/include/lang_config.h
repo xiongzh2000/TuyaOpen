@@ -56,6 +56,10 @@ extern "C" {
 #define DELETE_TEXT "删除"
 #define CONFIRM_TEXT "确认"
 #define RECOGNIZE_IMAGE_PROMPT "请解释上传图片的内容，不要触发MCP技能，不要调用MCP工具"
+#define IMG2IMG        "图生图"
+#define IMG2IMG_CAMERA "拍照"
+#define IMG2IMG_ALBUM  "从相册"
+#define IMG2IMG_READY  "图片已就绪，请说出编辑指令"
 
 #ifdef __cplusplus
 }
