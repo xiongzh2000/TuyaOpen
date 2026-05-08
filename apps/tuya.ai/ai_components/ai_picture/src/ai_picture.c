@@ -87,7 +87,8 @@ OPERATE_RET ai_picture_init(void)
                                                  COMP_AI_PICTURE_DEF_OUTPIUT_HEIGHT));
 
 #if defined(ENABLE_COMP_AI_PICTURE_HOSTING_DLD) && (ENABLE_COMP_AI_PICTURE_HOSTING_DLD == 1)
-    TUYA_CALL_ERR_LOG(ai_picture_output_dld_init());
+    TUYA_CALL_ERR_LOG(ai_picture_output_dld_init(COMP_AI_PICTURE_DEF_OUTPIUT_WIDTH,
+                                                 COMP_AI_PICTURE_DEF_OUTPIUT_HEIGHT));
 #endif
 
     return rt;

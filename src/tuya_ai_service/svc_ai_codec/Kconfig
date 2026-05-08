@@ -4,7 +4,7 @@ menuconfig ENABLE_TUYA_CODEC
     if (ENABLE_TUYA_CODEC)
         config ENABLE_TUYA_CODEC_OPUS
             bool "enable opus codec"
-            default y
+            default n
         config ENABLE_TUYA_CODEC_OPUS_IPC
             bool "enable opus codec through ipc"
             depends on ENABLE_TUYA_CODEC_OPUS

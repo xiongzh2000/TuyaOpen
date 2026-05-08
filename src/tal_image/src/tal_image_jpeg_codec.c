@@ -8,6 +8,7 @@
 #include "tal_image_jpeg_codec.h"
 #include "tuya_error_code.h"
 #include "tal_memory.h"
+#include "tal_mutex.h"
 #include <string.h>
 
 #if defined(ENABLE_LIBJPEGTURBO)
@@ -55,6 +56,17 @@ typedef struct {
 
 #if !defined(ENABLE_LIBJPEGTURBO)
 static tjpgd_out_ctx_t s_out_ctx;
+/* Mutex protecting s_out_ctx and jd_decomp. Required on SMP platforms (e.g.
+ * T5AI dual-core) where concurrent callers (display decode vs. printer decode)
+ * would otherwise race on the shared global output context. */
+static MUTEX_HANDLE sg_jpeg_decode_mutex = NULL;
+
+static void __jpeg_decode_mutex_ensure(void)
+{
+    if (sg_jpeg_decode_mutex == NULL) {
+        tal_mutex_create_init(&sg_jpeg_decode_mutex);
+    }
+}
 #endif
 
 /* Nearest-neighbor scale of an 8-bit grayscale image */
@@ -360,10 +372,13 @@ OPERATE_RET tal_image_jpeg_decode_rgb565(const uint8_t *jpeg_data,
             Free(workbuf);
             return OPRT_INVALID_PARM;
         }
+        __jpeg_decode_mutex_ensure();
+        tal_mutex_lock(sg_jpeg_decode_mutex);
         s_out_ctx.out_buf    = out->out_buf;
         s_out_ctx.out_width  = out->out_width;
         s_out_ctx.out_height = out->out_height;
         rc                   = jd_decomp(&jd, tjpgd_outfunc_rgb565, 0);
+        tal_mutex_unlock(sg_jpeg_decode_mutex);
         Free(workbuf);
         if (rc != JDR_OK) {
             return OPRT_COM_ERROR;
@@ -436,10 +451,13 @@ OPERATE_RET tal_image_jpeg_decode_rgb888(const uint8_t *jpeg_data,
             Free(workbuf);
             return OPRT_INVALID_PARM;
         }
+        __jpeg_decode_mutex_ensure();
+        tal_mutex_lock(sg_jpeg_decode_mutex);
         s_out_ctx.out_buf    = out->out_buf;
         s_out_ctx.out_width  = out->out_width;
         s_out_ctx.out_height = out->out_height;
         rc                   = jd_decomp(&jd, tjpgd_outfunc_rgb888, 0);
+        tal_mutex_unlock(sg_jpeg_decode_mutex);
         Free(workbuf);
         if (rc != JDR_OK) {
             return OPRT_COM_ERROR;
@@ -548,12 +566,15 @@ OPERATE_RET tal_image_jpeg_decode_gray(const uint8_t *jpeg_data,
             dec_h = (uint16_t)(dec_h >> 1u);
         }
 
+        __jpeg_decode_mutex_ensure();
         if (dec_w == out->out_width && dec_h == out->out_height) {
             /* Exact match at this scale — decode directly into output */
+            tal_mutex_lock(sg_jpeg_decode_mutex);
             s_out_ctx.out_buf    = out->out_buf;
             s_out_ctx.out_width  = out->out_width;
             s_out_ctx.out_height = out->out_height;
             rc = jd_decomp(&jd, tjpgd_outfunc_gray, scale);
+            tal_mutex_unlock(sg_jpeg_decode_mutex);
             Free(workbuf);
             if (rc != JDR_OK) {
                 return OPRT_COM_ERROR;
@@ -566,10 +587,12 @@ OPERATE_RET tal_image_jpeg_decode_gray(const uint8_t *jpeg_data,
                 Free(workbuf);
                 return OPRT_MALLOC_FAILED;
             }
+            tal_mutex_lock(sg_jpeg_decode_mutex);
             s_out_ctx.out_buf    = tmp;
             s_out_ctx.out_width  = dec_w;
             s_out_ctx.out_height = dec_h;
             rc = jd_decomp(&jd, tjpgd_outfunc_gray, scale);
+            tal_mutex_unlock(sg_jpeg_decode_mutex);
             Free(workbuf);
             if (rc != JDR_OK) {
                 Free(tmp);

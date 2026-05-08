@@ -180,11 +180,15 @@ static OPERATE_RET __ui_init(void)
     lv_obj_set_style_pad_all(sg_main.container, 0, 0);
     lv_obj_set_style_border_width(sg_main.container, 0, 0);
     lv_obj_set_style_pad_row(sg_main.container, 0, 0);
+    lv_obj_set_style_radius(sg_main.container, 0, 0);
     lv_obj_clear_flag(sg_main.container, LV_OBJ_FLAG_SCROLLABLE);
 
     /* Status bar */
     sg_main.status_bar = lv_obj_create(sg_main.container);
     lv_obj_set_size(sg_main.status_bar, LV_HOR_RES, STATUS_BAR_HEIGHT);
+    lv_obj_set_style_radius(sg_main.status_bar, 0, 0);
+    lv_obj_set_style_border_width(sg_main.status_bar, 0, 0);
+    lv_obj_set_style_pad_all(sg_main.status_bar, 0, 0);
     lv_obj_set_style_bg_color(sg_main.status_bar, lv_palette_main(LV_PALETTE_GREEN), 0);
 
     sg_main.mode_label = lv_label_create(sg_main.status_bar);
@@ -212,6 +216,7 @@ static OPERATE_RET __ui_init(void)
 
     sg_main.network_label = lv_label_create(sg_main.status_bar);
     lv_obj_set_style_text_font(sg_main.network_label, icon_font, 0);
+    lv_label_set_text(sg_main.network_label, "");
     lv_obj_align(sg_main.network_label, LV_ALIGN_RIGHT_MID, 0, 0);
 
     /* Init sub-pages */

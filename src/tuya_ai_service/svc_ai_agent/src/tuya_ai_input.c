@@ -576,7 +576,7 @@ OPERATE_RET tuya_ai_input_init(VOID)
     thrd_param.priority = THREAD_PRIO_1;
     thrd_param.thrdname = "ai_agent_input";
     thrd_param.stackDepth = AI_INPUT_STACK_SIZE;
-#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+#if defined(AI_STACK_IN_PSRAM) && (AI_STACK_IN_PSRAM == 1)
     thrd_param.psram_mode = 1;
 #endif
     rt = tal_thread_create_and_start(&ai_input_ctx.thread, NULL, NULL, __ai_input_thread, NULL, &thrd_param);

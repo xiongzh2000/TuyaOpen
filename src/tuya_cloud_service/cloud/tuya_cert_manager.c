@@ -418,14 +418,14 @@ void tuya_cert_save_to_kv(cJSON *result)
         int index    = 0;
         for (index = 0; index < arr_size; index++) {
             cJSON *p_ca            = cJSON_GetArrayItem(p_ca_arr, index);
-            char   tls_ca_name[10] = {0};
+            char   tls_ca_name[20] = {0};
             snprintf(tls_ca_name, sizeof(tls_ca_name), "tls_ca%d", index);
             PR_DEBUG("tls_ca_name:%s", tls_ca_name);
             tal_kv_set(tls_ca_name, (uint8_t *)(p_ca->valuestring), strlen(p_ca->valuestring) + 1);
         }
         // Delete old entries beyond the new count
         for (int i = arr_size; i < 16; i++) {
-            char tls_ca_name[10] = {0};
+            char tls_ca_name[20] = {0};
             snprintf(tls_ca_name, sizeof(tls_ca_name), "tls_ca%d", i);
             tal_kv_del(tls_ca_name);
         }
@@ -468,7 +468,7 @@ void tuya_cert_kv_to_ram(void)
     memset(s_tuya_cert_mng.p_der_arr, 0, (sizeof(ty_tls_der_t) * ca_cnt));
 
     for (index = 0; index < ca_cnt; index++) {
-        char tls_ca_name[10] = {0};
+        char tls_ca_name[20] = {0};
         snprintf(tls_ca_name, sizeof(tls_ca_name), "tls_ca%d", index);
         uint8_t *p_ca_str = NULL;
         size_t   ca_len   = 0;

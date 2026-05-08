@@ -762,7 +762,7 @@ static void __disp_image(AI_UI_IMG_T *img)
 
     sg_album.view_buf = rgb565_buf;
     lv_canvas_set_buffer(sg_album.view_canvas, sg_album.view_buf,
-                         info.width, info.height, LV_IMG_CF_TRUE_COLOR);
+                         info.width, info.height, LV_COLOR_FORMAT_RGB565);
     lv_obj_set_size(sg_album.view_canvas, info.width, info.height);
     lv_obj_center(sg_album.view_canvas);
     lv_obj_clear_flag(sg_album.view_canvas, LV_OBJ_FLAG_HIDDEN);
@@ -817,7 +817,7 @@ static void __disp_all_img_thumb_list(AI_UI_IMG_T *item_arr, uint32_t arr_cnt)
             lv_obj_t *canvas = lv_canvas_create(container);
             lv_canvas_set_buffer(canvas, item->data,
                                  item->width, item->height,
-                                 LV_IMG_CF_TRUE_COLOR);
+                                 LV_COLOR_FORMAT_RGB565);
             lv_obj_center(canvas);
         }
 
@@ -884,7 +884,7 @@ static void __disp_select_img_thumb_list(AI_UI_IMG_T *item_arr, uint32_t arr_cnt
             lv_obj_t *canvas = lv_canvas_create(container);
             lv_canvas_set_buffer(canvas, item->data,
                                  item->width, item->height,
-                                 LV_IMG_CF_TRUE_COLOR);
+                                 LV_COLOR_FORMAT_RGB565);
             lv_obj_center(canvas);
         }
 

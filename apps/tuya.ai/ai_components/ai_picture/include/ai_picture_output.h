@@ -52,9 +52,11 @@ OPERATE_RET ai_picture_output_save_to_album(uint8_t *data, uint32_t len, uint32_
  * @brief Register file-storage download handler to receive cloud-pushed images.
  *        Must be called after iot init (e.g. in pre_device_init).
  *        Max file size is controlled by COMP_AI_PICTURE_DLD_MAX_FILE_SIZE (default 2MB).
+ * @param[in] width desired output width in pixels
+ * @param[in] height desired output height in pixels
  * @return OPRT_OK on success
  */
-OPERATE_RET ai_picture_output_dld_init(void);
+OPERATE_RET ai_picture_output_dld_init(uint16_t width, uint16_t height);
 #endif
 
 #ifdef __cplusplus

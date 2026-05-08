@@ -198,8 +198,11 @@ OPERATE_RET tuya_ai_output_init(AI_OUTPUT_CBS_T *cbs)
     ai_output_ctx.output_buf = Malloc(AI_OUTPUT_BUF_SIZE);
     TUYA_CHECK_NULL_GOTO(ai_output_ctx.output_buf, EXIT);
 #if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+    PR_DEBUG("ai output: ENABLE_EXT_RAM=1, ringbuf from PSRAM");
     TUYA_CALL_ERR_GOTO(tuya_ring_buff_create(AI_OUTPUT_RINGBUF_SIZE, OVERFLOW_PSRAM_STOP_TYPE, &ai_output_ctx.ringbuf), EXIT);
+    PR_DEBUG("ai output: ringbuf=%p output_buf=%p", ai_output_ctx.ringbuf, ai_output_ctx.output_buf);
 #else
+    PR_DEBUG("ai output: ENABLE_EXT_RAM=0, ringbuf from SRAM");
     TUYA_CALL_ERR_GOTO(tuya_ring_buff_create(AI_OUTPUT_RINGBUF_SIZE, OVERFLOW_STOP_TYPE, &ai_output_ctx.ringbuf), EXIT);
 #endif
 
@@ -207,9 +210,10 @@ OPERATE_RET tuya_ai_output_init(AI_OUTPUT_CBS_T *cbs)
     thrd_param.priority = THREAD_PRIO_1;
     thrd_param.thrdname = "ai_agent_output";
     thrd_param.stackDepth = AI_OUTPUT_STACK_SIZE;
-#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+#if defined(AI_STACK_IN_PSRAM) && (AI_STACK_IN_PSRAM == 1)
     thrd_param.psram_mode = 1;
 #endif
+    PR_DEBUG("ai output: free internal heap before thread create: %d", tal_system_get_free_heap_size());
     rt = tal_thread_create_and_start(&ai_output_ctx.thread, NULL, NULL, __ai_output_thread, NULL, &thrd_param);
     if (OPRT_OK != rt) {
         PR_ERR("ai output thread create err, rt:%d", rt);

@@ -1012,6 +1012,7 @@ static OPERATE_RET __tdl_button_scan_task(uint8_t enable)
                 thrd_param.thrdname = "button_scan";
                 thrd_param.priority = THREAD_PRIO_1;
                 thrd_param.stackDepth = sg_bt_task_stack_size;
+                thrd_param.psram_mode = 1;
                 if (NULL == scan_thread_handle) {
                     ret = tal_thread_create_and_start(&scan_thread_handle, NULL, NULL, __tdl_button_scan_thread, NULL,
                                                       &thrd_param);
@@ -1045,6 +1046,7 @@ static OPERATE_RET __tdl_button_irq_task(uint8_t enable)
                 thrd_param.thrdname = "button_irq";
                 thrd_param.priority = THREAD_PRIO_1;
                 thrd_param.stackDepth = sg_bt_task_stack_size;
+                thrd_param.psram_mode = 1;
                 if (NULL == irq_thread_handle) {
                     ret = tal_thread_create_and_start(&irq_thread_handle, NULL, NULL, __tdl_button_irq_thread, NULL,
                                                       &thrd_param);
@@ -1270,24 +1272,6 @@ OPERATE_RET tdl_button_read_status(TDL_BUTTON_HANDLE handle, uint8_t *status)
     TUYA_CALL_ERR_RETURN(__tdl_get_operate_info(p_node, &button_oprt));
 
     TUYA_CALL_ERR_RETURN(p_node->device_data.ctrl_info.read_value(&button_oprt, status));
-
-    return rt;
-}
-
-OPERATE_RET tdl_button_set_level(TDL_BUTTON_HANDLE handle, TUYA_GPIO_LEVEL_E level)
-{
-    OPERATE_RET rt = OPRT_OK;
-    TDL_BUTTON_LIST_NODE_T *p_node = NULL;
-    TDL_BUTTON_OPRT_INFO button_oprt;
-
-    TUYA_CHECK_NULL_RETURN(handle, OPRT_INVALID_PARM);
-
-    p_node = __tdl_button_find_node(handle);
-    TUYA_CHECK_NULL_RETURN(p_node, OPRT_COM_ERROR);
-
-    TUYA_CALL_ERR_RETURN(__tdl_get_operate_info(p_node, &button_oprt));
-
-    TUYA_CALL_ERR_RETURN(tdd_gpio_button_update_level(button_oprt.dev_handle, level));
 
     return rt;
 }

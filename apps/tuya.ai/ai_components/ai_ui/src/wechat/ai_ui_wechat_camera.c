@@ -164,7 +164,7 @@ static void __disp_yuv_flush(AI_UI_VIDEO_T *video)
 
     lv_vendor_disp_lock();
     lv_canvas_set_buffer(sg_camera.preview_canvas, rgb565_buf,
-                         video->width, video->height, LV_IMG_CF_TRUE_COLOR);
+                         video->width, video->height, LV_COLOR_FORMAT_RGB565);
 
     /* Swap buffer and update canvas */
     if (sg_camera.preview_buf) {
@@ -246,7 +246,7 @@ static void __disp_set_thumbnail_jpeg(uint8_t *jpeg, uint32_t len)
     lv_obj_set_style_border_width(canvas, 0, 0);
     lv_obj_set_style_pad_all(canvas, 0, 0);
     lv_canvas_set_buffer(canvas, sg_camera.thumb_buf,
-                         CAMERA_THUMB_SIZE, CAMERA_THUMB_SIZE, LV_IMG_CF_TRUE_COLOR);
+                         CAMERA_THUMB_SIZE, CAMERA_THUMB_SIZE, LV_COLOR_FORMAT_RGB565);
     lv_obj_center(canvas);
 
     lv_vendor_disp_unlock();

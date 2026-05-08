@@ -40,6 +40,11 @@
 #define AI_BIZ_TASK_DELAY 10
 #endif
 
+#define AI_PARAMS_FIELD_VIDEO 5
+#define AI_PARAMS_FIELD_AUDIO 4
+#define AI_PARAMS_FIELD_IMAGE 4
+#define AI_PARAMS_FIELD_FILE  3
+
 typedef struct {
     CHAR_T           id[AI_UUID_V4_LEN];
     AI_SESSION_CFG_T cfg;
@@ -577,11 +582,11 @@ OPERATE_RET __ai_parse_video_attr(CHAR_T *de_buf, UINT_T attr_len, AI_VIDEO_ATTR
 #else
         if (attr.type == AI_ATTR_VIDEO_PARAMS) {
             AI_PROTO_D("parase vedio params attr value:%s", attr.value.str);
-            UINT_T codec_type = 0, sample_rate = 0, width = 0, height = 0, fps = 0;
-            CHAR_T parased = sscanf(attr.value.str, "%d %d %d %d %d", &codec_type, &width, &height, &fps, &sample_rate);
-            if (OPRT_COM_ERROR == parased) {
-                PR_ERR("parase vedio params attr value failed, rt:%d ", parased);
-                return parased;
+            int codec_type = 0, sample_rate = 0, width = 0, height = 0, fps = 0;
+            int parased = sscanf(attr.value.str, "%d %d %d %d %d", &codec_type, &width, &height, &fps, &sample_rate);
+            if (parased != AI_PARAMS_FIELD_VIDEO) {
+                PR_ERR("parase vedio params attr value failed, parsed:%d ", parased);
+                return OPRT_COM_ERROR;
             }
             video->base.codec_type  = (AI_VIDEO_CODEC_TYPE)codec_type;
             video->base.sample_rate = (UINT_T)sample_rate;
@@ -630,11 +635,11 @@ OPERATE_RET __ai_parse_audio_attr(CHAR_T *de_buf, UINT_T attr_len, AI_AUDIO_ATTR
 #else
         if (attr.type == AI_ATTR_AUDIO_PARAMS) {
             AI_PROTO_D("parase audio params attr value:%s", attr.value.str);
-            UINT_T codec_type = 0, sample_rate = 0, channels = 0, bit_depth = 0;
-            CHAR_T parased = sscanf(attr.value.str, "%d %d %d %d", &codec_type, &channels, &bit_depth, &sample_rate);
-            if (OPRT_COM_ERROR == parased) {
-                PR_ERR("parase audio params attr value failed, rt:%d ", parased);
-                return parased;
+            int codec_type = 0, sample_rate = 0, channels = 0, bit_depth = 0;
+            int parased = sscanf(attr.value.str, "%d %d %d %d", &codec_type, &channels, &bit_depth, &sample_rate);
+            if (parased != AI_PARAMS_FIELD_AUDIO) {
+                PR_ERR("parase audio params attr value failed, parsed:%d ", parased);
+                return OPRT_COM_ERROR;
             }
             audio->base.codec_type  = (AI_AUDIO_CODEC_TYPE)codec_type;
             audio->base.channels    = (AI_AUDIO_CHANNELS)channels;
@@ -679,11 +684,11 @@ OPERATE_RET __ai_parse_image_attr(CHAR_T *de_buf, UINT_T attr_len, AI_IMAGE_ATTR
 #else
         if (AI_ATTR_IMAGE_PARAMS == attr.type) {
             AI_PROTO_D("parase image params attr value:%s", attr.value.str);
-            UINT_T image_type = 0, image_format = 0, image_width = 0, image_height = 0;
-            CHAR_T parased = sscanf(attr.value.str, "%d %d %d %d", &image_type, &image_format, &image_width, &image_height);
-            if (OPRT_COM_ERROR == parased) {
-                PR_ERR("parase image params attr value failed, rt:%d ", parased);
-                return parased;
+            int image_type = 0, image_format = 0, image_width = 0, image_height = 0;
+            int parased = sscanf(attr.value.str, "%d %d %d %d", &image_type, &image_format, &image_width, &image_height);
+            if (parased != AI_PARAMS_FIELD_IMAGE) {
+                PR_ERR("parase image params attr value failed, parsed:%d ", parased);
+                return OPRT_COM_ERROR;
             }
             image->base.type   = (AI_IMAGE_PAYLOAD_TYPE)image_type;
             image->base.format = (AI_IMAGE_FORMAT)image_format;
@@ -734,12 +739,12 @@ OPERATE_RET __ai_parse_file_attr(CHAR_T *de_buf, UINT_T attr_len, AI_FILE_ATTR_T
 #else
         if (AI_ATTR_FILE_PARAMS == attr.type) {
             AI_PROTO_D("parase file params attr value:%s", attr.value.str);
-            UINT_T  file_type = 0, file_format = 0;
+            int file_type = 0, file_format = 0;
             UCHAR_T file_name[256] = {0};
-            CHAR_T  parased        = sscanf(attr.value.str, "%d %d %s", &file_type, &file_format, file_name);
-            if (OPRT_COM_ERROR == parased) {
-                PR_ERR("parase image params attr value failed, rt:%d ", parased);
-                return parased;
+            int parased = sscanf(attr.value.str, "%d %d %s", &file_type, &file_format, file_name);
+            if (parased != AI_PARAMS_FIELD_FILE) {
+                PR_ERR("parase image params attr value failed, parsed:%d ", parased);
+                return OPRT_COM_ERROR;
             }
             file->base.type   = (AI_FILE_PAYLOAD_TYPE)file_type;
             file->base.format = (AI_FILE_FORMAT)file_format;

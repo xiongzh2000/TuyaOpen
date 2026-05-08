@@ -111,7 +111,9 @@ static void __ai_chat_handle_event(AI_NOTIFY_EVENT_T *event)
         #if defined(ENABLE_PRINTER) && (ENABLE_PRINTER == 1)
         case AI_USER_EVT_GENERATE_PICTURE:
         case AI_USER_EVT_GET_PICTURE_FROM_APP: {
+            #if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
             app_print_img_from_album((const char *)event->data);
+            #endif
         } break;
         #endif
         default:

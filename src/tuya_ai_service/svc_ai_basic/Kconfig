@@ -66,10 +66,12 @@ menu "AI Protocol Config"
 
     config AI_HEAP_IN_PSRAM
         bool "AI_HEAP_IN_PSRAM: use psram for heap"
+        default y if ENABLE_EXT_RAM
         default n
 
     config AI_STACK_IN_PSRAM
         bool "AI_STACK_IN_PSRAM: use psram for stack"
+        default y if ENABLE_EXT_RAM
         default n
 
     config AI_SEND_PKT_TIMEOUT

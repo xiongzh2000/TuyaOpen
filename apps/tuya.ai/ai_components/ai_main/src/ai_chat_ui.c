@@ -122,7 +122,7 @@ void ai_chat_ui_handle_event(AI_NOTIFY_EVENT_T *event)
 #if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
     case AI_USER_EVT_GENERATE_PICTURE: 
     case AI_USER_EVT_GET_PICTURE_FROM_APP: {
-        ai_ui_disp_msg(AI_UI_DISP_AI_IMAGE_LINK, (uint8_t *)(event->data), strlen((char *)(event->data))+1);
+        ai_ui_disp_msg(AI_UI_DISP_AI_IMAGE_LINK, (uint8_t *)(event->data), strlen((char *)(event->data)));
     } break;
 
     case AI_USER_EVT_SEND_PICTURE_END: {

@@ -2227,7 +2227,7 @@ STATIC OPERATE_RET __create_video_attrs(AI_SEND_PACKET_T *pkt, AI_VIDEO_ATTR_T *
 #else
     UCHAR_T video_params[64];
     memset(video_params, 0, sizeof(video_params));
-    CHAR_T video_params_len = snprintf((CHAR_T *)video_params, sizeof(video_params), "%d %d %d %d %d", video->base.codec_type, video->base.width, video->base.height, video->base.fps, video->base.sample_rate);
+    CHAR_T video_params_len = snprintf((CHAR_T *)video_params, sizeof(video_params), "%d %d %d %d %d", (int)video->base.codec_type, (int)video->base.width, (int)video->base.height, (int)video->base.fps, (int)video->base.sample_rate);
     // AI_ATTR_AUDIO_PARAMS
     if (video_params_len > 0) {
         pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_PARAMS, ATTR_PT_STR, video_params, video_params_len);
@@ -2286,7 +2286,7 @@ STATIC OPERATE_RET __create_audio_attrs(AI_SEND_PACKET_T *pkt, AI_AUDIO_ATTR_T *
         frame_size = (bitrate * frame_duration) / 8000;
     }
     memset(audio_params, 0, sizeof(audio_params));
-    audio_params_len = snprintf((CHAR_T *)audio_params, sizeof(audio_params), "%d %d %d %d %d %d %d %d", audio->base.codec_type, audio->base.channels, audio->base.bit_depth, audio->base.sample_rate, container, bitrate, frame_duration, frame_size);
+    audio_params_len = snprintf((CHAR_T *)audio_params, sizeof(audio_params), "%d %d %d %d %d %d %d %d", audio->base.codec_type, audio->base.channels, audio->base.bit_depth, (int)audio->base.sample_rate, container, (int)bitrate, frame_duration, frame_size);
     if (audio_params_len > 0) {
         pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_PARAMS, ATTR_PT_STR, audio_params, audio_params_len);
         AI_PROTO_D("audio params : %s ", audio_params);

@@ -790,7 +790,7 @@ int tal_cli_init_with_uart(uint8_t uart_num)
     }
     tal_cli_cmd_register((cli_cmd_t *)&s_cli_cmd, 1);
 
-    THREAD_CFG_T param;
+    THREAD_CFG_T param = {0};
 
     param.priority = THREAD_PRIO_3;
     param.stackDepth = 3072;
