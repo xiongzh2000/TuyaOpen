@@ -161,7 +161,8 @@ OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
 
     tdl_printer_start(sg_printer_hdl);
 
-    rt = tdl_printer_send_bitmap(sg_printer_hdl, 0, out_w, out_h, bitmap_buf);
+    uint16_t x_offset = (print_width > out_w) ? (print_width - out_w) / 2 : 0;
+    rt = tdl_printer_send_bitmap(sg_printer_hdl, x_offset, out_w, out_h, bitmap_buf);
     Free(bitmap_buf);
     if (rt != OPRT_OK) {
         PR_ERR("print: send_bitmap failed, rt:%d", rt);
