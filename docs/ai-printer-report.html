@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI 打印机 Demo 工作汇报</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    background: #f5f7fa;
+    color: #2c3e50;
+    line-height: 1.7;
+  }
+  .container { max-width: 1120px; margin: 0 auto; padding: 40px 28px; }
+  header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 56px 40px;
+    border-radius: 14px;
+    margin-bottom: 32px;
+    box-shadow: 0 12px 32px rgba(102,126,234,0.25);
+  }
+  header h1 { font-size: 32px; margin-bottom: 12px; letter-spacing: 1px; }
+  header .subtitle { font-size: 17px; opacity: 0.92; }
+  header .meta { margin-top: 20px; font-size: 14px; opacity: 0.82; }
+  header .meta span { margin-right: 24px; }
+  .section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px 36px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .section h2 {
+    font-size: 22px;
+    color: #2c3e50;
+    border-left: 4px solid #667eea;
+    padding-left: 14px;
+    margin-bottom: 20px;
+  }
+  .section h3 {
+    font-size: 17px;
+    color: #34495e;
+    margin: 18px 0 10px 0;
+  }
+  p { margin-bottom: 12px; color: #4a5568; }
+  ul { margin: 8px 0 8px 24px; color: #4a5568; }
+  li { margin-bottom: 6px; }
+
+  .highlight-box {
+    background: #eef2ff;
+    border-left: 4px solid #667eea;
+    padding: 16px 20px;
+    border-radius: 6px;
+    margin: 16px 0;
+    color: #3c4858;
+  }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 8px 0; }
+  .stat-card {
+    background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid #e0e7ff;
+  }
+  .stat-card .num { font-size: 30px; font-weight: 700; color: #667eea; }
+  .stat-card .label { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+  .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 12px; }
+  .feature {
+    background: #fafbff;
+    padding: 18px 20px;
+    border-radius: 8px;
+    border: 1px solid #edf0fa;
+  }
+  .feature .tag {
+    display: inline-block;
+    background: #667eea;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 8px;
+  }
+  .feature h4 { font-size: 15px; color: #2d3748; margin-bottom: 8px; display: flex; align-items: center; }
+  .feature p { font-size: 13.5px; margin: 0; color: #5a6478; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left;
+    padding: 11px 14px;
+    border-bottom: 1px solid #eef1f6;
+  }
+  th { background: #f7f9fc; color: #2c3e50; font-weight: 600; }
+  tr:hover { background: #fafbfd; }
+
+  .timeline { position: relative; padding-left: 28px; margin: 12px 0; }
+  .timeline::before {
+    content: ''; position: absolute; left: 8px; top: 4px; bottom: 4px;
+    width: 2px; background: #e0e7ff;
+  }
+  .tl-item { position: relative; margin-bottom: 18px; }
+  .tl-item::before {
+    content: ''; position: absolute; left: -24px; top: 6px;
+    width: 10px; height: 10px; border-radius: 50%; background: #667eea;
+    box-shadow: 0 0 0 3px #fff, 0 0 0 4px #c7d2fe;
+  }
+  .tl-date { font-size: 13px; color: #667eea; font-weight: 600; }
+  .tl-title { font-size: 15px; color: #2d3748; margin: 3px 0; font-weight: 600; }
+  .tl-desc { font-size: 13.5px; color: #6b7280; }
+
+  .flow {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px; margin: 16px 0;
+  }
+  .flow-step {
+    flex: 1; min-width: 130px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; padding: 14px 10px; border-radius: 8px;
+    text-align: center; font-size: 13px;
+    position: relative;
+  }
+  .flow-step .idx { display: block; font-size: 11px; opacity: 0.8; margin-bottom: 3px; }
+  .flow-arrow { color: #a8b3cf; font-size: 20px; font-weight: 700; }
+
+  .tech-stack { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .tech-stack span {
+    background: #eef2ff;
+    color: #4c51bf;
+    padding: 5px 11px;
+    border-radius: 14px;
+    font-size: 12.5px;
+    border: 1px solid #e0e7ff;
+  }
+
+  footer {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    margin-top: 24px;
+    padding: 20px;
+  }
+
+  @media (max-width: 720px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .feature-grid { grid-template-columns: 1fr; }
+    header { padding: 36px 24px; }
+    .section { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+  <h1>AI 打印机 Demo 工作汇报</h1>
+  <div class="subtitle">基于 TuyaOpen SDK + AI 辅助编程的跨端固件开发实践</div>
+  <div class="meta">
+    <span>汇报人：熊 | 后端研发</span>
+    <span>项目：AI 打印机（你的闲聊打印伙伴）</span>
+    <span>周期：2026-04 ~ 2026-05</span>
+  </div>
+</header>
+
+<!-- 1. 项目概述 -->
+<div class="section">
+  <h2>一、项目背景与目标</h2>
+  <p>作为后端研发，本项目核心目的是<strong>探索"AI 辅助跨端开发"的可行性</strong>：用 AI 编程能力突破后端工程师对嵌入式固件这一陌生领域的技能壁垒，并借助涂鸦 TuyaOpen SDK 的成熟能力，快速落地一个完整的软硬件产品级 Demo。</p>
+  <div class="highlight-box">
+    <strong>立意：</strong>AI Agent 打印机——一个兼具陪伴感与创造力的硬件玩具。用户可以和它闲聊、让它根据语音生成图片、把喜欢的图片直接热敏打印出来，赋予虚拟内容以物理载体。
+  </div>
+  <div class="stats">
+    <div class="stat-card"><div class="num">3</div><div class="label">核心功能模块</div></div>
+    <div class="stat-card"><div class="num">37</div><div class="label">个人提交数</div></div>
+    <div class="stat-card"><div class="num">4</div><div class="label">周开发周期</div></div>
+    <div class="stat-card"><div class="num">100%</div><div class="label">AI 辅助编码占比</div></div>
+  </div>
+</div>
+
+<!-- 2. 产品能力 -->
+<div class="section">
+  <h2>二、Demo 具备的产品能力</h2>
+  <div class="feature-grid">
+    <div class="feature">
+      <h4><span class="tag">语音</span>AI 闲聊陪伴</h4>
+      <p>长按/唤醒词触发，设备麦克风采集语音，经涂鸦 AI 云 ASR → LLM → TTS 回环，LCD 实时流式显示对话内容，支持打断与连续对话。</p>
+    </div>
+    <div class="feature">
+      <h4><span class="tag">文生图</span>一句话画图打印</h4>
+      <p>对设备说"帮我画一只太空猫"，AI 生成图片并自动热敏打印。链路：语音 → AI 文生图 → 相册保存 → 打印机输出。</p>
+    </div>
+    <div class="feature">
+      <h4><span class="tag">图生图</span>拍照/选图 + 语音改图</h4>
+      <p>"+"按钮弹出图生图面板，选择"拍照"或"从相册"，配合语音指令（如"把它变成卡通风格"），AI 改图后打印。同 session 图+语音联合输入。</p>
+    </div>
+    <div class="feature">
+      <h4><span class="tag">打印</span>热敏打印机集成</h4>
+      <p>支持 MTP02 / DP48 两款打印机，ESC/POS 位图分块发送，图片抖动算法降噪，自动走纸撕纸；打印过程状态叠层显示。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 整体架构 / 数据流 -->
+<div class="section">
+  <h2>三、图生图核心链路（技术亮点）</h2>
+  <p>图生图是在已有文生图能力基础上的增量扩展。复用底层 <code>ai_mode_hold_vad_change()</code> 的图文联合输入管道，UI 与 App 层仅增量改动 4 个文件即打通入口。</p>
+  <div class="flow">
+    <div class="flow-step"><span class="idx">STEP 1</span>用户点 + → 图生图</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="idx">STEP 2</span>拍照 / 相册选图</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="idx">STEP 3</span>图片入队 +<br>通知"请说出指令"</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="idx">STEP 4</span>语音触发<br>(图+语音同 session)</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="idx">STEP 5</span>AI 改图 →<br>热敏打印输出</div>
+  </div>
+  <div class="highlight-box">
+    <strong>设计思路：</strong>最小侵入式扩展。仅新增 2 个 Action 枚举、4 个字符串常量、1 个二级弹窗；复用既有的摄像头模块、相册多选、打印链路。兼容 wechat UI 风格，不影响 chatbot / oled 其他风格。
+  </div>
+</div>
+
+<!-- 4. 工作拆解 -->
+<div class="section">
+  <h2>四、关键工作内容</h2>
+
+  <h3>4.1 新功能开发</h3>
+  <table>
+    <tr><th>功能</th><th>核心工作</th><th>涉及文件</th></tr>
+    <tr><td>图生图（img2img）</td><td>设计文档 + 实现计划 + UI 二级弹窗 + Action 状态机 + 多语言</td><td>ai_ui_wechat_chat.c / app_ui_action.c / lang_config.json</td></tr>
+    <tr><td>打印机模块化</td><td>从 chat_bot 抽离独立 printer 模块，支持 MTP02/DP48</td><td>app_printer.c / TDL 驱动</td></tr>
+    <tr><td>拍学机场景</td><td>聊天/识别/特效三 Tab 首页 + 场景切换 + 语音 intent 注入</td><td>your_photo_ai 全新 scaffold</td></tr>
+  </table>
+
+  <h3>4.2 稳定性修复</h3>
+  <ul>
+    <li><strong>并发打印死锁</strong>：打印顺序加锁，解决打断导致对话不显示问题（#577 已合入主干）</li>
+    <li><strong>摄像头支持</strong>：打开 <code>COMP_AI_VIDEO</code> / <code>BOARD_CAMERA</code> Kconfig，修复非 JPEG 图片 decode 崩溃</li>
+    <li><strong>空指针防护</strong>：为图生图回调、ui_chat、ui_recognize 添加 NULL guard</li>
+    <li><strong>交互细节</strong>：图片生成后立即展示 → 自动返回聊天（3s → 10s 可调）</li>
+  </ul>
+
+  <h3>4.3 工程化建设</h3>
+  <ul>
+    <li>配置 MCP filesystem server，让 Claude Code 原生读取 <code>docs/</code> 技术手册</li>
+    <li>在项目根统一管理 MCP 与权限配置</li>
+    <li>补齐 <code>docs/</code> 目录：FAQ / ESP32 硬件 / 构建系统 / 编程手册 / AI UI 组件等 7 份 AI Agent 可用文档</li>
+  </ul>
+</div>
+
+<!-- 5. 开发时间线 -->
+<div class="section">
+  <h2>五、开发时间线</h2>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-date">2026-04（前半）</div>
+      <div class="tl-title">拍学机 Scaffold + 三 Tab 首页</div>
+      <div class="tl-desc">搭建 your_photo_ai 脚手架、聊天/识别/特效三场景 UI、Action 全量派发</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2026-04（后半）</div>
+      <div class="tl-title">打印链路稳定化</div>
+      <div class="tl-desc">打印机模块化、加锁修复并发问题、打断展示模型回复、对话显示异常修复</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2026-05-07</div>
+      <div class="tl-title">图生图功能一日交付</div>
+      <div class="tl-desc">写设计文档 → 写实现计划 → 5 个 commit 完成编码 → 配置打开 + 语言包同步</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2026-05-11</div>
+      <div class="tl-title">工程化收尾</div>
+      <div class="tl-desc">MCP 服务器统一配置、文档体系补齐，支撑后续 AI Agent 持续维护</div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. 技术栈 -->
+<div class="section">
+  <h2>六、技术栈</h2>
+  <h3>硬件 & 固件</h3>
+  <div class="tech-stack">
+    <span>涂鸦 T5AI MCU</span><span>LCD 3.5"</span><span>摄像头模组</span>
+    <span>热敏打印机 MTP02/DP48</span><span>麦克风/扬声器</span>
+  </div>
+  <h3>SDK & 框架</h3>
+  <div class="tech-stack">
+    <span>TuyaOpen SDK</span><span>FreeRTOS</span><span>LVGL 8/9</span>
+    <span>CMake / Kconfig</span><span>TAL 抽象层</span><span>涂鸦 AI 云</span>
+  </div>
+  <h3>AI 协作工具链</h3>
+  <div class="tech-stack">
+    <span>Claude Code</span><span>Superpowers Skills</span>
+    <span>MCP Filesystem Server</span><span>TDD 工作流</span>
+  </div>
+</div>
+
+<!-- 7. 价值与思考 -->
+<div class="section">
+  <h2>七、实践价值与思考</h2>
+
+  <h3>7.1 对个人</h3>
+  <ul>
+    <li><strong>跨端能力验证</strong>：后端工程师零基础进入嵌入式 C、LVGL UI、FreeRTOS 的能力迁移路径被跑通</li>
+    <li><strong>全栈视角</strong>：从云端服务 → 设备 SDK → 应用层 UI 的完整链路贯通</li>
+  </ul>
+
+  <h3>7.2 对团队</h3>
+  <ul>
+    <li><strong>AI 辅助开发范式</strong>：文档 → 设计 → 计划 → 编码 → 调试全链路 AI 协作，可沉淀为团队方法论</li>
+    <li><strong>硬件产品创新低成本化</strong>：基于涂鸦 SDK + AI 云，传统需要数人月的硬件 Demo 可由 1 人 4 周完成</li>
+    <li><strong>文档即基础设施</strong>：为 AI Agent 准备的结构化手册（MCP 访问）显著提升后续迭代效率</li>
+  </ul>
+
+  <h3>7.3 下一步规划</h3>
+  <ul>
+    <li>接入更多玩具形态：对话角色定制、情感陪伴类 IP</li>
+    <li>打印内容扩展：贴纸、二维码、手账模板</li>
+    <li>沉淀"AI + IoT"跨端开发最佳实践到内部 wiki</li>
+  </ul>
+</div>
+
+<footer>
+  涂鸦 AI 打印机 Demo · 2026-05 · 基于 TuyaOpen 开源 SDK
+</footer>
+
+</div>
+
+</body>
+</html>

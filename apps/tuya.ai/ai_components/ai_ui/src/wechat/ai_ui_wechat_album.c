@@ -488,6 +488,7 @@ static void __create_view_page(lv_obj_t *parent)
 
     /* Title */
     lv_obj_t *print_title = lv_label_create(sg_album.print_overlay);
+    lv_obj_set_style_text_font(print_title, ai_ui_get_text_font(), 0);
     lv_obj_set_style_text_color(print_title, lv_color_white(), 0);
     lv_label_set_text(print_title, PRINT_IMAGE);
     sg_album.print_status_label = print_title;
@@ -513,6 +514,7 @@ static void __create_view_page(lv_obj_t *parent)
     lv_obj_clear_flag(cancel_btn, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(cancel_btn, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_t *cancel_label = lv_label_create(cancel_btn);
+    lv_obj_set_style_text_font(cancel_label, ai_ui_get_text_font(), 0);
     lv_obj_set_style_text_color(cancel_label, lv_color_white(), 0);
     lv_label_set_text(cancel_label, CANCEL);
     lv_obj_center(cancel_label);
@@ -529,6 +531,7 @@ static void __create_view_page(lv_obj_t *parent)
     lv_obj_clear_flag(confirm_btn, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(confirm_btn, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_t *confirm_label = lv_label_create(confirm_btn);
+    lv_obj_set_style_text_font(confirm_label, ai_ui_get_text_font(), 0);
     lv_obj_set_style_text_color(confirm_label, lv_color_white(), 0);
     lv_label_set_text(confirm_label, CONFIRM_TEXT);
     lv_obj_center(confirm_label);
