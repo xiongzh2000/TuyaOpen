@@ -24,6 +24,10 @@ if(!ENABLE_AI_CHAT_CUSTOM_UI)
         config ENABLE_AI_CHAT_GUI_OLED
             select ENABLE_LIBLVGL
             bool "Use OLED ui"
+
+        config ENABLE_AI_CHAT_GUI_SIMPLE
+            select ENABLE_LIBLVGL
+            bool "Simple style (text + image, auto-print)"
     endchoice
 
     config ENABLE_CIRCLE_UI_STYLE

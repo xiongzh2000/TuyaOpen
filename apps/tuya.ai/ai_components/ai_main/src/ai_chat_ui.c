@@ -16,6 +16,8 @@
 #include "ai_ui_chat_chatbot.h"
 #elif defined(ENABLE_AI_CHAT_GUI_OLED) && (ENABLE_AI_CHAT_GUI_OLED == 1)
 #include "ai_ui_chat_oled.h"
+#elif defined(ENABLE_AI_CHAT_GUI_SIMPLE) && (ENABLE_AI_CHAT_GUI_SIMPLE == 1)
+#include "ai_ui_chat_simple.h"
 #endif
 
 #include "ai_chat_main.h"
@@ -149,6 +151,8 @@ OPERATE_RET ai_chat_ui_init(void)
     TUYA_CALL_ERR_RETURN(ai_ui_chat_chatbot_register());
 #elif defined(ENABLE_AI_CHAT_GUI_OLED) && (ENABLE_AI_CHAT_GUI_OLED == 1)
     TUYA_CALL_ERR_RETURN(ai_ui_chat_oled_register());
+#elif defined(ENABLE_AI_CHAT_GUI_SIMPLE) && (ENABLE_AI_CHAT_GUI_SIMPLE == 1)
+    TUYA_CALL_ERR_RETURN(ai_ui_chat_simple_register());
 #else
 #error "please select ai chat present ui"
 #endif
