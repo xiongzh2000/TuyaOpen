@@ -1,0 +1,16 @@
+config CHIP_CHOICE
+    string
+    default "esp32s3"
+
+config BOARD_CHOICE
+    string
+    default "WAVESHARE_ESP32S3_Touch_LCD_7"
+
+config BOARD_CONFIG
+    bool
+    default y
+    select ENABLE_EXT_RAM
+    select ENABLE_DISPLAY
+    select ENABLE_TP
+    select PLATFORM_FLASHSIZE_16M
+    select ENABLE_ESP32S3_USB_JTAG_ONLY

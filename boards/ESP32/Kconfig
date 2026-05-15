@@ -109,6 +109,12 @@ choice
             rsource "./WAVESHARE_ESP32C6_DEV_KIT_N16/Kconfig"
         endif
 
+    config BOARD_CHOICE_WAVESHARE_ESP32S3_TOUCH_LCD_7
+        bool "WAVESHARE_ESP32S3_Touch_LCD_7"
+        if (BOARD_CHOICE_WAVESHARE_ESP32S3_TOUCH_LCD_7)
+            rsource "./WAVESHARE_ESP32S3_Touch_LCD_7/Kconfig"
+        endif
+
 # <new-board-add: This line cannot be deleted or modified>
 
 endchoice
