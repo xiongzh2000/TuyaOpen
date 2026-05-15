@@ -1,0 +1,7 @@
+[mcp_servers.tuyaopen-docs]
+args = [
+    "-y",
+    "@modelcontextprotocol/server-filesystem",
+    "./docs",
+]
+command = "npx"

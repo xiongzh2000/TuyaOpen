@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Flux.2-Keltin-4B 自部署成本分析</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    background: #f5f7fa;
+    color: #2c3e50;
+    line-height: 1.7;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 40px 28px; }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 52px 40px;
+    border-radius: 14px;
+    margin-bottom: 32px;
+    box-shadow: 0 12px 32px rgba(102,126,234,0.25);
+  }
+  header h1 { font-size: 30px; margin-bottom: 10px; letter-spacing: 1px; }
+  header .subtitle { font-size: 15px; opacity: 0.92; margin-bottom: 16px; }
+  header .meta { font-size: 13px; opacity: 0.82; }
+  header .meta span { margin-right: 22px; }
+  header .tag-line {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    padding: 6px 14px;
+    border-radius: 14px;
+    font-size: 12.5px;
+    margin-top: 8px;
+  }
+
+  /* Section */
+  .section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 30px 34px;
+    margin-bottom: 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .section h2 {
+    font-size: 21px;
+    color: #2c3e50;
+    border-left: 4px solid #667eea;
+    padding-left: 14px;
+    margin-bottom: 18px;
+  }
+  .section h3 { font-size: 16px; color: #34495e; margin: 16px 0 10px 0; }
+  p { margin-bottom: 10px; color: #4a5568; font-size: 14.5px; }
+  ul { margin: 8px 0 8px 24px; color: #4a5568; font-size: 14.5px; }
+  li { margin-bottom: 5px; }
+
+  /* Stats - 4 big numbers */
+  .stats-hero {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin: 8px 0;
+  }
+  .stat-big {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 26px 18px;
+    border-radius: 12px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-big .num {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .stat-big .unit { font-size: 14px; opacity: 0.9; margin-left: 3px; font-weight: 400; }
+  .stat-big .label {
+    font-size: 13px;
+    margin-top: 10px;
+    opacity: 0.95;
+  }
+  .stat-big .note {
+    font-size: 11px;
+    opacity: 0.75;
+    margin-top: 4px;
+  }
+
+  /* Highlight box */
+  .highlight-box {
+    background: #eef2ff;
+    border-left: 4px solid #667eea;
+    padding: 14px 18px;
+    border-radius: 6px;
+    margin: 14px 0;
+    color: #3c4858;
+    font-size: 14px;
+  }
+  .highlight-box strong { color: #4c51bf; }
+
+  .warn-box {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 14px 18px;
+    border-radius: 6px;
+    margin: 14px 0;
+    color: #78350f;
+    font-size: 13.5px;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 11px 13px;
+    border-bottom: 1px solid #eef1f6;
+    text-align: left;
+  }
+  th {
+    background: #f7f9fc;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+  tr:hover { background: #fafbfd; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.center { text-align: center; }
+  .emp { color: #4c51bf; font-weight: 600; }
+
+  /* Two cloud compare */
+  .cloud-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 12px;
+  }
+  .cloud-card {
+    padding: 24px;
+    border-radius: 12px;
+    border: 2px solid;
+  }
+  .cloud-card.aliyun {
+    border-color: #ff6a00;
+    background: linear-gradient(135deg, #fff8f0 0%, #ffebd5 100%);
+  }
+  .cloud-card.aws {
+    border-color: #ff9900;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  }
+  .cloud-card h4 {
+    font-size: 18px;
+    color: #2d3748;
+    margin-bottom: 4px;
+  }
+  .cloud-card .tag {
+    display: inline-block;
+    background: rgba(0,0,0,0.06);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #4a5568;
+    margin-bottom: 14px;
+  }
+  .cloud-card .rows { font-size: 14px; }
+  .cloud-card .row-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px dashed #e5d3b3;
+  }
+  .cloud-card .row-item:last-child { border-bottom: none; }
+  .cloud-card .row-item .k { color: #64748b; }
+  .cloud-card .row-item .v { color: #2d3748; font-weight: 500; }
+  .cloud-card .final-price {
+    margin-top: 12px;
+    padding: 14px;
+    background: rgba(255,255,255,0.75);
+    border-radius: 8px;
+    text-align: center;
+  }
+  .cloud-card .final-price .fp-num {
+    font-size: 26px;
+    font-weight: 700;
+    color: #d97706;
+  }
+  .cloud-card.aliyun .final-price .fp-num { color: #e25a00; }
+  .cloud-card .final-price .fp-label { font-size: 12px; color: #64748b; }
+
+  /* Formula */
+  .formula {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+    font-size: 13.5px;
+    margin: 10px 0;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+  .formula .keyword { color: #7dd3fc; }
+  .formula .num-v { color: #fbbf24; }
+  .formula .result { color: #86efac; font-weight: 600; }
+  .formula .comment { color: #64748b; font-style: italic; }
+
+  /* Scale table */
+  .scale-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 160px 160px 160px;
+    gap: 12px;
+    padding: 12px 10px;
+    border-bottom: 1px solid #eef1f6;
+    align-items: center;
+    font-size: 14px;
+  }
+  .scale-row.head {
+    background: #f7f9fc;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 13px;
+  }
+  .scale-bar {
+    background: #eef2ff;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .scale-bar-fill {
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    height: 100%;
+    border-radius: 5px;
+  }
+  .scale-row .lbl { font-weight: 600; color: #2d3748; }
+  .scale-row .v { text-align: right; font-variant-numeric: tabular-nums; color: #475569; }
+  .scale-row .emp-v { color: #4c51bf; font-weight: 600; }
+
+  /* Decision ladder */
+  .decision-ladder {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .dec-card {
+    padding: 22px 20px;
+    border-radius: 12px;
+    border: 2px solid;
+    text-align: center;
+    position: relative;
+  }
+  .dec-card.keep { background: #ecfdf5; border-color: #10b981; }
+  .dec-card.eval { background: #fef3c7; border-color: #f59e0b; }
+  .dec-card.self { background: #eef2ff; border-color: #667eea; }
+  .dec-card .range {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+  .dec-card .title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .dec-card.keep .title { color: #047857; }
+  .dec-card.eval .title { color: #b45309; }
+  .dec-card.self .title { color: #4338ca; }
+  .dec-card .desc { font-size: 13px; color: #4a5568; line-height: 1.6; }
+
+  /* Conclusion list */
+  .conclusions { counter-reset: cn; }
+  .conclusion {
+    position: relative;
+    padding: 16px 18px 16px 50px;
+    margin-bottom: 10px;
+    background: #fafbff;
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+  }
+  .conclusion::before {
+    counter-increment: cn;
+    content: counter(cn);
+    position: absolute;
+    left: 14px;
+    top: 18px;
+    width: 24px;
+    height: 24px;
+    background: #667eea;
+    color: #fff;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 24px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .conclusion .c-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 3px;
+  }
+  .conclusion .c-body {
+    font-size: 13.5px;
+    color: #64748b;
+  }
+
+  footer {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    margin-top: 24px;
+    padding: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .stats-hero { grid-template-columns: repeat(2, 1fr); }
+    .cloud-compare { grid-template-columns: 1fr; }
+    .decision-ladder { grid-template-columns: 1fr; }
+    .scale-row { grid-template-columns: 100px 1fr; font-size: 13px; }
+    .scale-row > *:nth-child(n+3) { grid-column: span 2; text-align: left !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+  <h1>Flux.2-Keltin-4B 自部署推理成本分析</h1>
+  <div class="subtitle">A10 GPU × 阿里云 / AWS × 包 3 年预留 × 24 小时服务 × 1 s/张 推理</div>
+  <div class="meta">
+    <span>报告人：熊 · 后端研发</span>
+    <span>日期：2026-05-14</span>
+    <span>面向：TL 内部成本汇报</span>
+  </div>
+  <div class="tag-line">📊 基于公开价格测算 · 用于决策"自建 vs 购买"</div>
+</header>
+
+<!-- Section 1: 背景 -->
+<div class="section">
+  <h2>一、背景与分析目标</h2>
+  <p>当前 AI 打印机 Demo 的图像生成依赖外部生图 API，规模化量产前需要回答一个关键问题：<strong>如果向云厂商订购 A10 机器自建集群、部署开源 Flux.2-Keltin-4B 模型替代外采 API，单图成本与规模化经济性如何？</strong></p>
+
+  <h3>核心问题</h3>
+  <ul>
+    <li>一台 A10 GPU 机器每天能产出多少张图？</li>
+    <li>单张图的云资源成本是多少？</li>
+    <li>一台机器可以支撑多少个终端设备？不同规模下总成本怎么走？</li>
+    <li>相比外采云厂商的文生图 API（两个候选：z-image-turbo / multimodal-dialog），自建集群的盈亏平衡点在哪里？</li>
+  </ul>
+
+  <div class="highlight-box">
+    <strong>结论速览：</strong>自建单图成本 <strong>0.10 分</strong>，单机可支撑 <strong>~6,000 台设备</strong>；但因阿里 <strong>multimodal-dialog API 折后仅 ¥0.009/张</strong>，自建盈亏点从 z-image-turbo 的千台级上升到万台级——<strong>API 选型比"是否自建"更关键</strong>。
+  </div>
+</div>
+
+<!-- Section 2: 核心成本摘要 -->
+<div class="section">
+  <h2>二、核心数字速览</h2>
+  <p style="margin-bottom:14px;">基于"阿里云 gn7i 包 3 年 5.5 折"主推方案：</p>
+  <div class="stats-hero">
+    <div class="stat-big">
+      <div class="num">¥0.10<span class="unit">分</span></div>
+      <div class="label">自建单图成本</div>
+      <div class="note">≈ ¥0.000971 / 张</div>
+    </div>
+    <div class="stat-big">
+      <div class="num">60,480<span class="unit">张</span></div>
+      <div class="label">单机日产能</div>
+      <div class="note">24h × 70% 利用率</div>
+    </div>
+    <div class="stat-big">
+      <div class="num">6,048<span class="unit">台</span></div>
+      <div class="label">单机支持设备</div>
+      <div class="note">每台 10 张图/天</div>
+    </div>
+    <div class="stat-big">
+      <div class="num">¥1.75<span class="unit">/台</span></div>
+      <div class="label">单设备全周期云成本</div>
+      <div class="note">180 天基准；90 天约 ¥0.87</div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: 输入假设 -->
+<div class="section">
+  <h2>三、关键输入假设</h2>
+  <p>所有测算基于以下明确假设，TL 可针对任意一项挑战并快速重算。</p>
+  <table>
+    <tr><th>类别</th><th>参数</th><th>取值</th><th>依据 / 备注</th></tr>
+    <tr><td rowspan="2"><strong>模型</strong></td><td>模型规模</td><td>Flux.2-Keltin-4B</td><td>4B 参数蒸馏版</td></tr>
+    <tr><td>推理步数</td><td>4 step</td><td>快速蒸馏版默认配置</td></tr>
+    <tr><td rowspan="3"><strong>硬件</strong></td><td>GPU</td><td>NVIDIA A10 24GB × 1</td><td>阿里云 gn7i / AWS G5 均使用</td></tr>
+    <tr><td>文生图单图耗时</td><td>1 秒</td><td><span class="emp">实测 512×512 @ 1.1s；320×480 @ 0.8~0.9s</span>（打印机主场景按 1s 保守估算）</td></tr>
+    <tr><td>分辨率</td><td>320 × 480（主）/ 512 × 512</td><td>打印机主场景为 320×480 小尺寸</td></tr>
+    <tr><td rowspan="4"><strong>使用模式</strong></td><td>服务运行时段</td><td><span class="emp">24 小时全天</span></td><td>机器全天计费，按 24h 算有效产能（海外时区分流 + 异步队列削峰填谷）</td></tr>
+    <tr><td>利用率 η</td><td><span class="emp">70%</span></td><td>预留 30% 给请求波动、冷启动、健康检查、维护</td></tr>
+    <tr><td>单设备日均用量</td><td><span class="emp">10 张 / 天</span></td><td>综合前期高频 + 后期低频的均值（行业调研依据见下）</td></tr>
+    <tr><td>产品有效生命周期</td><td><span class="emp">90 / 180 / 270 天</span></td><td>90 天用于短生命周期敏感性，180 天作为基准，270 天用于强运营高留存场景</td></tr>
+    <tr><td rowspan="3"><strong>商务</strong></td><td>采购方式</td><td><span class="emp">包 3 年预留</span></td><td>云厂商标准长期合同，折扣最大</td></tr>
+    <tr><td>外采 API 候选<br>（折后，× 0.75）</td><td>A: z-image-turbo ¥0.075/张<br>B: multimodal-dialog ¥0.009/张</td><td>阿里云大模型服务，涂鸦企业合同 7.5 折</td></tr>
+    <tr><td>汇率</td><td>1 USD = 7.2 CNY</td><td>2026-05 中间价</td></tr>
+  </table>
+
+  <h3>AI 儿童玩具使用特征调研（10 张/天 × 180 天假设依据）</h3>
+  <ul>
+    <li><strong>"两周热度"规律</strong>：公开行业访谈指出，AI 陪伴玩具样机前 2 周用户活跃度高，第 3 周起大量用户停用。平均使用频率呈现"先高后低"曲线。</li>
+    <li><strong>退货率 30~40%</strong>：AI 毛绒玩具行业媒体数据，部分用户"尝鲜"后即退货或闲置。</li>
+    <li><strong>留存率</strong>：头部厂商次月/三月留存"百分之大几十"，复购率 20%+；私域精细运营下月活留存最高 68%。</li>
+    <li><strong>单次对话时长</strong>：17~20 分钟（不同于持续使用，需乘以实际使用天数）。</li>
+  </ul>
+  <div class="warn-box">
+    <strong>基准取值说明：</strong>取 10 张/天 × 180 天 = 单设备全生命周期 1,800 张，用于中高频成本基准；若产品更偏"尝鲜玩具"，应同时看 90 天短生命周期场景；若后续留存改善，可上调至 15 张/天 × 270 天。
+  </div>
+
+  <h3>生命周期敏感性（按 10 张/天）</h3>
+  <table>
+    <tr>
+      <th>生命周期</th>
+      <th>全周期用量</th>
+      <th>自建 GPU 成本/台<br>（满载摊销）</th>
+      <th>multimodal-dialog/台<br>（¥0.009/张）</th>
+      <th>z-image-turbo/台<br>（¥0.075/张）</th>
+      <th>适用判断</th>
+    </tr>
+    <tr>
+      <td><strong>90 天</strong></td>
+      <td class="center">900 张</td>
+      <td class="center">¥0.87</td>
+      <td class="center">¥8.10</td>
+      <td class="center">¥67.50</td>
+      <td>短生命周期/尝鲜型玩具；用于压力测试业务留存不达预期时的成本下限</td>
+    </tr>
+    <tr>
+      <td><strong>180 天</strong></td>
+      <td class="center">1,800 张</td>
+      <td class="center">¥1.75</td>
+      <td class="center">¥16.20</td>
+      <td class="center">¥135.00</td>
+      <td>当前基准口径；适合前期高频、后期衰减后的中高频平均</td>
+    </tr>
+    <tr>
+      <td><strong>270 天</strong></td>
+      <td class="center">2,700 张</td>
+      <td class="center">¥2.62</td>
+      <td class="center">¥24.30</td>
+      <td class="center">¥202.50</td>
+      <td>强运营/高留存场景；自建相对 API 的经济性进一步增强</td>
+    </tr>
+  </table>
+  <div class="warn-box">
+    <strong>固定成本提醒：</strong>上表自建成本按 GPU 资源接近满载摊销；若只有 1,000 台设备，90 天也必须至少购买 1 台 GPU，实际 GPU 成本为 ¥1,762 × 3 = ¥5,286，即 ¥5.29/台，而不是 ¥0.87/台。
+  </div>
+</div>
+
+<!-- Section 4: 双云对比 -->
+<div class="section">
+  <h2>四、双云方案对比（阿里云 vs AWS）</h2>
+  <p>两朵云的 A10 GPU 实例都适合 Flux.2 推理，差异主要在价格与适用区域。</p>
+
+  <div class="cloud-compare">
+    <div class="cloud-card aliyun">
+      <h4>🟠 阿里云 gn7i</h4>
+      <div class="tag">国内主推方案</div>
+      <div class="rows">
+        <div class="row-item"><span class="k">实例规格</span><span class="v">8 vCPU / 30G / 1× A10 24GB</span></div>
+        <div class="row-item"><span class="k">按量付费</span><span class="v">¥15~16 / 小时</span></div>
+        <div class="row-item"><span class="k">包月牌价</span><span class="v">¥3,204 / 月</span></div>
+        <div class="row-item"><span class="k">包年 8 折</span><span class="v">¥30,758 / 年 ≈ ¥2,563 / 月</span></div>
+        <div class="row-item"><span class="k">包 3 年 5.5 折</span><span class="v">≈ ¥1,762 / 月</span></div>
+      </div>
+      <div class="final-price">
+        <div class="fp-num">¥1,762 / 月</div>
+        <div class="fp-label">包 3 年 5.5 折</div>
+      </div>
+    </div>
+
+    <div class="cloud-card aws">
+      <h4>🟡 AWS g5.xlarge</h4>
+      <div class="tag">出海方案</div>
+      <div class="rows">
+        <div class="row-item"><span class="k">实例规格</span><span class="v">4 vCPU / 16G / 1× A10G 24GB</span></div>
+        <div class="row-item"><span class="k">按需 On-Demand</span><span class="v">$1.006/h ≈ ¥7.24/h</span></div>
+        <div class="row-item"><span class="k">月付牌价</span><span class="v">$734/月 ≈ ¥5,287 / 月</span></div>
+        <div class="row-item"><span class="k">1 年预留（40% off）</span><span class="v">≈ ¥3,131 / 月</span></div>
+        <div class="row-item"><span class="k">3 年预留（60% off）</span><span class="v">≈ ¥2,115 / 月</span></div>
+      </div>
+      <div class="final-price">
+        <div class="fp-num">¥2,115 / 月</div>
+        <div class="fp-label">3 年预留（60% off）</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <strong>选型建议：</strong>国内业务走<strong>阿里云 gn7i 包 3 年</strong>，月成本 ¥1,762，比 AWS 3 年预留低 ~17%；出海业务走 <strong>AWS g5 3 年预留</strong>，就近部署降低网络延迟。两者相差约 ¥353/月，规模化后差距可控。
+  </div>
+</div>
+
+<!-- Section 5: 计算推导 -->
+<div class="section">
+  <h2>五、计算推导过程（公式透明）</h2>
+  <p>以下全部推导基于阿里云主推方案（包 3 年预留 ¥1,762/月）。每一步公式都已展开，TL 可独立代入自己的参数重算。</p>
+
+  <h3>① 日有效产能</h3>
+  <div class="formula">
+<span class="comment"># 24 小时计费 × 吞吐 × 利用率</span>
+日产能 = 24h × 3600s × 1 img/s × η
+       = <span class="num-v">86,400</span> × <span class="num-v">70%</span>
+       = <span class="result">60,480 张 / 天</span></div>
+
+  <h3>② 单机日成本</h3>
+  <div class="formula">
+<span class="comment"># 24h 常开，月成本按 30 天均摊</span>
+日成本 = <span class="num-v">¥1,762</span> / 30
+       = <span class="result">¥58.73 / 天</span></div>
+
+  <h3>③ 单图成本</h3>
+  <div class="formula">
+单图成本 = 日成本 / 日产能
+         = <span class="num-v">¥58.73</span> / <span class="num-v">60,480 张</span>
+         = <span class="result">¥0.000971 / 张 ≈ 0.10 分</span></div>
+
+  <h3>④ 单机可支撑设备数</h3>
+  <div class="formula">
+设备数 = 日产能 / 单设备日用量
+       = <span class="num-v">60,480</span> / <span class="num-v">10</span>
+       = <span class="result">6,048 台 ≈ 6,000 台</span></div>
+
+  <h3>⑤ 单设备全生命周期云成本</h3>
+  <div class="formula">
+全周期用量 = 10 张/天 × 180 天 = <span class="num-v">1,800 张/台</span>
+全周期自建成本 = <span class="num-v">¥0.000971</span> × <span class="num-v">1,800</span>
+              = <span class="result">¥1.75 / 台</span></div>
+
+  <h3>⑥ 90 天短生命周期场景</h3>
+  <div class="formula">
+短生命周期用量 = 10 张/天 × 90 天 = <span class="num-v">900 张/台</span>
+90 天自建成本 = <span class="num-v">¥0.000971</span> × <span class="num-v">900</span>
+              = <span class="result">¥0.87 / 台</span>
+
+90 天 API 成本（multimodal-dialog） = <span class="num-v">900</span> × <span class="num-v">¥0.009</span> = <span class="result">¥8.10 / 台</span>
+90 天 API 成本（z-image-turbo）     = <span class="num-v">900</span> × <span class="num-v">¥0.075</span> = <span class="result">¥67.50 / 台</span></div>
+
+  <div class="warn-box">
+    <strong>关于 70% 利用率的说明：</strong>并非 GPU 吃不满 70%，而是从"实际可用产能"角度——预留 15% 给请求波动（国内高峰 + 海外时区不完全均匀）、10% 给冷启动/健康检查/模型重载、5% 给队列等待与维护窗口。如果能做到更精细的批量调度与预热，η 可拉升到 80~85%，单机设备数最多可到 ~7,340 台。
+  </div>
+</div>
+
+<!-- Section 6: 规模化场景 -->
+<div class="section">
+  <h2>六、规模化场景预算</h2>
+  <p>基于每台 A10 承载 6,048 台设备上限（10 张/天），以阿里云包 3 年方案测算不同产品规模下的 GPU 云成本：</p>
+
+  <div class="scale-row head">
+    <div>设备规模</div>
+    <div>占用 GPU 资源</div>
+    <div class="v">所需机器数</div>
+    <div class="v">月 GPU 成本</div>
+    <div class="v">单台设备月成本</div>
+  </div>
+  <div class="scale-row">
+    <div class="lbl">1,000 台</div>
+    <div class="scale-bar"><div class="scale-bar-fill" style="width:6%"></div></div>
+    <div class="v">1 台（富余 5,000）</div>
+    <div class="v">¥1,762</div>
+    <div class="v emp-v">¥1.76</div>
+  </div>
+  <div class="scale-row">
+    <div class="lbl">5,000 台</div>
+    <div class="scale-bar"><div class="scale-bar-fill" style="width:6%"></div></div>
+    <div class="v">1 台（富余 1,000）</div>
+    <div class="v">¥1,762</div>
+    <div class="v emp-v">¥0.35</div>
+  </div>
+  <div class="scale-row">
+    <div class="lbl">10,000 台</div>
+    <div class="scale-bar"><div class="scale-bar-fill" style="width:12%"></div></div>
+    <div class="v">2 台</div>
+    <div class="v">¥3,524</div>
+    <div class="v emp-v">¥0.35</div>
+  </div>
+  <div class="scale-row">
+    <div class="lbl">50,000 台</div>
+    <div class="scale-bar"><div class="scale-bar-fill" style="width:53%"></div></div>
+    <div class="v">9 台</div>
+    <div class="v">¥15,858</div>
+    <div class="v emp-v">¥0.32</div>
+  </div>
+  <div class="scale-row">
+    <div class="lbl">100,000 台</div>
+    <div class="scale-bar"><div class="scale-bar-fill" style="width:100%"></div></div>
+    <div class="v">17 台</div>
+    <div class="v">¥29,954</div>
+    <div class="v emp-v">¥0.30</div>
+  </div>
+
+  <div class="highlight-box">
+    <strong>规模经济效应：</strong>从 1,000 台扩到 10 万台，单台 GPU 成本从 ¥1.76/月 降至 ¥0.30/月，下降约 83%。规模越大，单位固定成本越低——这就是自建的核心吸引力。
+  </div>
+</div>
+
+<!-- Section 7: 外采 API vs 自建集群 -->
+<div class="section">
+  <h2>七、外采 API 方案 vs 自建 A10 集群（决策分析）</h2>
+  <p>涂鸦作为设备厂商，规模化 AI 打印机业务有两条路线可选。<strong>外采 API 有两个候选</strong>，成本差异巨大：</p>
+
+  <div class="cloud-compare">
+    <div class="cloud-card aliyun">
+      <h4>🎨 候选 A：阿里 z-image-turbo</h4>
+      <div class="tag">专业文生图模型</div>
+      <div class="rows">
+        <div class="row-item"><span class="k">定位</span><span class="v">阿里专业文生图 API</span></div>
+        <div class="row-item"><span class="k">牌价</span><span class="v">¥0.1 / 张</span></div>
+        <div class="row-item"><span class="k">涂鸦企业折扣</span><span class="v">× 0.75（7.5 折）</span></div>
+        <div class="row-item"><span class="k">单设备月成本</span><span class="v">10 × 30 × ¥0.075 = ¥22.5</span></div>
+        <div class="row-item"><span class="k">单设备全周期成本</span><span class="v">1,800 × ¥0.075 = ¥135</span></div>
+      </div>
+      <div class="final-price">
+        <div class="fp-num">¥0.075 / 张</div>
+        <div class="fp-label">折后单价</div>
+      </div>
+    </div>
+
+    <div class="cloud-card aws">
+      <h4>💬 候选 B：阿里 multimodal-dialog</h4>
+      <div class="tag">开发套件模型 · 性价比首选</div>
+      <div class="rows">
+        <div class="row-item"><span class="k">定位</span><span class="v">阿里开发套件中的多模态模型</span></div>
+        <div class="row-item"><span class="k">牌价</span><span class="v">¥0.012 / 张</span></div>
+        <div class="row-item"><span class="k">涂鸦企业折扣</span><span class="v">× 0.75（7.5 折）</span></div>
+        <div class="row-item"><span class="k">单设备月成本</span><span class="v">10 × 30 × ¥0.009 = ¥2.7</span></div>
+        <div class="row-item"><span class="k">单设备全周期成本</span><span class="v">1,800 × ¥0.009 = ¥16.2</span></div>
+      </div>
+      <div class="final-price">
+        <div class="fp-num">¥0.009 / 张</div>
+        <div class="fp-label">折后单价</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>三方案成本横向对比</h3>
+  <table>
+    <tr>
+      <th>方案</th>
+      <th>单图成本</th>
+      <th>单设备全周期成本<br>（1,800 张）</th>
+      <th>10 万台全周期<br>总成本</th>
+      <th>vs 自建倍数</th>
+    </tr>
+    <tr>
+      <td>外采 A：z-image-turbo（折后）</td>
+      <td class="center">¥0.075 / 张</td>
+      <td class="center">¥135 / 台</td>
+      <td class="center">¥1,350 万</td>
+      <td class="center emp">77 倍</td>
+    </tr>
+    <tr>
+      <td>外采 B：multimodal-dialog（折后）</td>
+      <td class="center">¥0.009 / 张</td>
+      <td class="center">¥16.2 / 台</td>
+      <td class="center">¥162 万</td>
+      <td class="center emp">9.3 倍</td>
+    </tr>
+    <tr style="background:#eef2ff;">
+      <td><strong>自建集群（Flux.2-Keltin-4B）</strong></td>
+      <td class="center"><strong>¥0.000971 / 张</strong></td>
+      <td class="center"><strong>¥1.75 / 台</strong></td>
+      <td class="center"><strong>¥17.5 万</strong>（纯 GPU 成本）</td>
+      <td class="center">—</td>
+    </tr>
+  </table>
+
+  <div class="highlight-box">
+    <strong>关键洞察：</strong>multimodal-dialog（¥0.009/张）单价只是 z-image-turbo 的 12%，<strong>差距比 z-image-turbo 与自建的差距还大</strong>。如果 multimodal-dialog 能满足生图质量要求，它可能是最优解——省自建的运维、算法、基础设施成本。<strong>API 选型比"是否自建"更关键。</strong>
+  </div>
+
+  <h3>盈亏平衡测算（针对两个 API 候选分别计算）</h3>
+
+  <div class="formula">
+<span class="comment"># X 为设备数，API 月成本 = 设备数 × 10 张/天 × 30 天 × 单价</span>
+
+<span class="comment"># —————————— 候选 A：z-image-turbo 折后 ¥0.075/张 ——————————</span>
+<span class="comment"># API 月成本 = ¥22.5 × X</span>
+
+场景 A1（仅 GPU ¥1,762/月）   ¥1,762  = 22.5X  → X = <span class="result">~79 台</span>
+场景 A2（+运维 ¥16,762/月）   ¥16,762 = 22.5X  → X = <span class="result">~745 台</span>
+场景 A3（+全套 ¥31,762/月）   ¥31,762 = 22.5X  → X = <span class="result">~1,412 台</span>
+
+<span class="comment"># —————————— 候选 B：multimodal-dialog 折后 ¥0.009/张 ——————————</span>
+<span class="comment"># API 月成本 = ¥2.7 × X</span>
+
+场景 B1（仅 GPU ¥1,762/月）   ¥1,762  = 2.7X   → X = <span class="result">~653 台</span>
+场景 B2（+运维 ¥16,762/月）   ¥16,762 = 2.7X   → X = <span class="result">~6,208 台</span>
+场景 B3（+全套 ¥31,762/月）   ¥31,762 = 2.7X   → X = <span class="result">~11,764 台</span></div>
+
+  <h3>决策区间建议</h3>
+  <div class="decision-ladder">
+    <div class="dec-card keep">
+      <div class="range">任何规模</div>
+      <div class="title">优先评估 multimodal-dialog</div>
+      <div class="desc">折后仅 ¥0.009/张，是自建的 9.3 倍，但免运维、免算法、免基础设施。<strong>前提是生图质量能满足 AI 打印机产品要求——这是最需要优先验证的事情。</strong></div>
+    </div>
+    <div class="dec-card eval">
+      <div class="range">质量不达标时</div>
+      <div class="title">z-image-turbo + 自建 POC</div>
+      <div class="desc">若 multimodal-dialog 质量不够用 z-image-turbo：< 1,400 台外采、1,400~1 万台启动自建 POC、&gt; 1 万台全面自建。可混合部署降低风险。</div>
+    </div>
+    <div class="dec-card self">
+      <div class="range">&gt; 12,000 台</div>
+      <div class="title">全面自建（对 multimodal-dialog）</div>
+      <div class="desc">规模超过 1.2 万台，自建对即使便宜的 multimodal-dialog 也开始具备经济性。但此阶段应考虑多 SKU/多模型路线，用最贵的场景跑自建。</div>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <strong>非成本维度的考量：</strong>自部署还需要承担——模型迭代（Flux 系列更新后需要重新调优）、GPU 供应（A10 阶段性紧张）、合规出海（海外数据不落地要求）、多地域冗余（故障容灾）等复杂度。规模 &lt; 1 万台时，这些隐性成本通常比 GPU 本身还贵；而 multimodal-dialog 由云厂商承担所有这些复杂度。
+  </div>
+</div>
+
+<!-- 结论 -->
+<div class="section">
+  <h2>八、结论与建议</h2>
+
+  <div class="conclusions">
+    <div class="conclusion">
+      <div class="c-title">API 选型比"是否自建"影响更大</div>
+      <div class="c-body">外采 multimodal-dialog（¥0.009/张）比 z-image-turbo（¥0.075/张）便宜 8.3 倍，差距甚至超过"z-image-turbo vs 自建"的差距。先评估便宜的 API 是否能满足产品质量要求，是第一性问题。</div>
+    </div>
+    <div class="conclusion">
+      <div class="c-title">单台 A10 可覆盖 ~6,000 台终端设备</div>
+      <div class="c-body">按每台设备日均 10 张、24 小时服务、70% 利用率估算。即便到 10 万台规模，也只需 17 台 A10，月 GPU 成本 ≈ ¥3.0 万。</div>
+    </div>
+    <div class="conclusion">
+      <div class="c-title">阿里云 gn7i 包 3 年是国内最优解</div>
+      <div class="c-body">月成本 ¥1,762，比 AWS g5 3 年预留低 17%。出海业务再单独用 AWS，就近部署降低延迟。</div>
+    </div>
+    <div class="conclusion">
+      <div class="c-title">分情景的决策路径</div>
+      <div class="c-body"><strong>情景 1：multimodal-dialog 质量达标 →</strong> 规模 &lt; 12,000 台都继续外采，省心省人力。<strong>情景 2：必须用 z-image-turbo →</strong> &lt; 1,400 台外采、1,400~10,000 台混合 POC、&gt; 10,000 台全面自建。</div>
+    </div>
+    <div class="conclusion">
+      <div class="c-title">下一步行动建议</div>
+      <div class="c-body">① 立即用 multimodal-dialog 做样品生图，对比 z-image-turbo 与 Flux.2-Keltin-4B 的质量差距（成本差 8 倍，质量差距是核心决策依据）；② 跟阿里商务确认 multimodal-dialog 的 7.5 折实际合同价与 SLA；③ 实测 Flux.2-Keltin-4B 在 A10 上的真实吞吐，校验 1s/张假设；④ 基于行业调研数据（10 张/天 × 180 天）建立用户使用量的长期监测。</div>
+    </div>
+  </div>
+</div>
+
+<!-- 附录 -->
+<div class="section">
+  <h2>附录：未计入的成本与风险</h2>
+  <h3>未计入的直接成本</h3>
+  <ul>
+    <li><strong>公网带宽</strong>：10Mbps 约 ¥200/月；图片返回若走公网，规模化后可达 ¥2,000+/月</li>
+    <li><strong>云存储 ESSD</strong>：¥0.3~0.6/GB/月，相册缓存需按需测算</li>
+    <li><strong>模型文件存储</strong>：Flux.2-Keltin-4B 权重 ~8GB，可忽略</li>
+    <li><strong>监控 / 日志 / 告警</strong>：云厂商托管服务 ~¥500/月</li>
+  </ul>
+
+  <h3>未计入的间接成本</h3>
+  <ul>
+    <li>运维人力（至少 0.5 HC SRE，月 ~¥15,000）</li>
+    <li>算法团队对推理服务的持续支持（模型版本升级、prompt 工程）</li>
+    <li>多区域部署的管理开销（国内 + 海外双活）</li>
+    <li>GPU 紧张期的替代成本（A10 不可得时可能需要用 L20/A100 临时方案）</li>
+  </ul>
+
+  <h3>风险提示</h3>
+  <ul>
+    <li><strong>吞吐假设待验证</strong>：1 img/s 基于 512×512 4-step 蒸馏版推测，实测可能 0.8~1.2，影响 ±20% 产能</li>
+    <li><strong>利用率 η 敏感</strong>：如真实 η = 50%，单机设备数降至 4,320 台，规模成本上升 40%</li>
+    <li><strong>设备生命周期假设风险</strong>：180 天是当前基准；若实际只有 90 天，满载摊销下自建成本约 ¥0.87/台，multimodal-dialog 约 ¥8.10/台，z-image-turbo 约 ¥67.50/台，但短生命周期也意味着产品留存不足；若留存更长（如 270/365 天），自建优势加大</li>
+    <li><strong>multimodal-dialog 质量风险</strong>：价格便宜 8 倍的背后，需要评估生图质量是否匹配打印机输出要求，这是采购决策的最大不确定因素</li>
+    <li><strong>模型迭代</strong>：Flux 系列若升级到更大参数量，A10 24GB 可能无法承载，需升级到 A100</li>
+    <li><strong>云厂商长合约锁定风险</strong>：包 3 年可节省大量成本，但若业务规模不达预期，提前退租违约金较高</li>
+  </ul>
+</div>
+
+<footer>
+  Flux.2-Keltin-4B 自部署成本分析 · 2026-05-14 · 基于公开价格 · 仅供内部参考
+</footer>
+
+</div>
+
+</body>
+</html>
