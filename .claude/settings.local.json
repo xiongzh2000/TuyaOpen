@@ -20,7 +20,10 @@
       "mcp__tuyaopen-docs__read_text_file",
       "Bash(rm -rf .build)",
       "Bash(/Users/xiongzhenhua/gitlab/embedded/TuyaOpen/.venv/bin/python /Users/xiongzhenhua/gitlab/embedded/TuyaOpen/tos.py build)",
-      "WebSearch"
+      "WebSearch",
+      "mcp__tuyaopen-docs__list_directory_with_sizes",
+      "WebFetch(domain:www.waveshare.com)",
+      "WebFetch(domain:files.waveshare.com)"
     ]
   },
   "enableAllProjectMcpServers": true,
