@@ -48,6 +48,9 @@ static void __ai_chat_disp_mode_state(AI_MODE_STATE_E state)
     case AI_MODE_STATE_LISTEN:
         ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)LISTENING, strlen(LISTENING));
         break;
+    case AI_MODE_STATE_THINK:
+        ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)THINKING, strlen(THINKING));
+        break;
     case AI_MODE_STATE_SPEAK:
         ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)SPEAKING, strlen(SPEAKING));
         break;

@@ -19,7 +19,8 @@
       "mcp__tuyaopen-docs__directory_tree",
       "mcp__tuyaopen-docs__read_text_file",
       "Bash(rm -rf .build)",
-      "Bash(/Users/xiongzhenhua/gitlab/embedded/TuyaOpen/.venv/bin/python /Users/xiongzhenhua/gitlab/embedded/TuyaOpen/tos.py build)"
+      "Bash(/Users/xiongzhenhua/gitlab/embedded/TuyaOpen/.venv/bin/python /Users/xiongzhenhua/gitlab/embedded/TuyaOpen/tos.py build)",
+      "WebSearch"
     ]
   },
   "enableAllProjectMcpServers": true,

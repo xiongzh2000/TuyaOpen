@@ -15,7 +15,11 @@
 #include "font_awesome_symbols.h"
 #include "lang_config.h"
 #include "tal_image_jpeg_codec.h"
+#include "ai_audio_player.h"
 #include "welcome_img.h"
+#include "listen_img.h"
+#include "generating_img.h"
+#include "image_gen_alert.h"
 
 /***********************************************************
 ************************macro define************************
@@ -39,6 +43,9 @@ typedef struct {
 static AI_UI_SIMPLE_MAIN_T sg_main = {0};
 static lv_timer_t          *sg_notification_tm = NULL;
 static char                 sg_saved_status[128] = {0};
+static uint8_t             *sg_welcome_rgb565 = NULL;
+static uint8_t             *sg_listen_rgb565 = NULL;
+static uint8_t             *sg_gen_rgb565 = NULL;
 
 /***********************************************************
 ***********************extern declare**********************
@@ -56,6 +63,33 @@ static void __lvgl_init(void)
     lv_vendor_start(5, 1024 * 8);
 }
 
+static uint8_t *__decode_jpeg_to_rgb565(const uint8_t *jpeg, uint32_t jpeg_len)
+{
+    uint32_t rgb_size = 320 * 480 * 2;
+    uint8_t *rgb_buf = Malloc(rgb_size);
+    if (rgb_buf == NULL) {
+        return NULL;
+    }
+    TAL_IMAGE_JPEG_OUTPUT_T out = {0};
+    out.out_buf = rgb_buf;
+    out.out_buf_size = rgb_size;
+    out.out_width = 320;
+    out.out_height = 480;
+    if (tal_image_jpeg_decode_rgb565((uint8_t *)jpeg, jpeg_len, &out) != OPRT_OK) {
+        Free(rgb_buf);
+        return NULL;
+    }
+    return rgb_buf;
+}
+
+static void __switch_idle_image(uint8_t *rgb565_buf)
+{
+    if (sg_main.welcome_canvas == NULL || rgb565_buf == NULL) {
+        return;
+    }
+    lv_canvas_set_buffer(sg_main.welcome_canvas, rgb565_buf, 320, 480, LV_COLOR_FORMAT_RGB565);
+}
+
 /* ── idle page show / hide (called from chat file) ── */
 
 void ai_ui_simple_show_idle(void)
@@ -65,6 +99,9 @@ void ai_ui_simple_show_idle(void)
     }
 
     lv_vendor_disp_lock();
+    if (sg_welcome_rgb565) {
+        __switch_idle_image(sg_welcome_rgb565);
+    }
     lv_obj_clear_flag(sg_main.idle_page, LV_OBJ_FLAG_HIDDEN);
     lv_vendor_disp_unlock();
 }
@@ -108,17 +145,29 @@ static void __ui_set_status(char *status)
         return;
     }
 
-    /* Save status so it can be restored after a notification */
     strncpy(sg_saved_status, status, sizeof(sg_saved_status) - 1);
     sg_saved_status[sizeof(sg_saved_status) - 1] = '\0';
 
-    /* Only update the label if no notification is currently shown */
     if (sg_notification_tm != NULL) {
         return;
     }
 
     lv_vendor_disp_lock();
     lv_label_set_text(sg_main.status_label, status);
+
+    if (strcmp(status, LISTENING) == 0 && sg_listen_rgb565) {
+        __switch_idle_image(sg_listen_rgb565);
+        lv_obj_clear_flag(sg_main.idle_page, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_move_foreground(sg_main.idle_page);
+    } else if (strcmp(status, THINKING) == 0 && sg_gen_rgb565) {
+        __switch_idle_image(sg_gen_rgb565);
+        lv_obj_clear_flag(sg_main.idle_page, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_move_foreground(sg_main.idle_page);
+        ai_audio_play_data(AI_AUDIO_CODEC_MP3, (uint8_t *)image_gen_alert_data, IMAGE_GEN_ALERT_SIZE);
+    } else if (strcmp(status, STANDBY) == 0 && sg_welcome_rgb565) {
+        __switch_idle_image(sg_welcome_rgb565);
+    }
+
     lv_vendor_disp_unlock();
 }
 
@@ -188,28 +237,16 @@ static OPERATE_RET __ui_init(void)
     lv_obj_set_scrollbar_mode(sg_main.idle_page, LV_SCROLLBAR_MODE_OFF);
 
     /* Welcome image — decode JPEG to RGB565 canvas */
-    do {
-        uint32_t rgb_size = 320 * 480 * 2;
-        uint8_t *rgb_buf = Malloc(rgb_size);
-        if (rgb_buf == NULL) {
-            PR_ERR("simple: welcome image malloc failed");
-            break;
-        }
-        TAL_IMAGE_JPEG_OUTPUT_T out = {0};
-        out.out_buf = rgb_buf;
-        out.out_buf_size = rgb_size;
-        out.out_width = 320;
-        out.out_height = 480;
-        if (tal_image_jpeg_decode_rgb565((uint8_t *)welcome_img_data, WELCOME_IMG_SIZE, &out) != OPRT_OK) {
-            PR_ERR("simple: welcome image decode failed");
-            Free(rgb_buf);
-            break;
-        }
+    sg_welcome_rgb565 = __decode_jpeg_to_rgb565(welcome_img_data, WELCOME_IMG_SIZE);
+    sg_listen_rgb565 = __decode_jpeg_to_rgb565(listen_img_data, LISTEN_IMG_SIZE);
+    sg_gen_rgb565 = __decode_jpeg_to_rgb565(generating_img_data, GENERATING_IMG_SIZE);
+
+    if (sg_welcome_rgb565) {
         sg_main.welcome_canvas = lv_canvas_create(sg_main.idle_page);
-        lv_canvas_set_buffer(sg_main.welcome_canvas, rgb_buf, 320, 480, LV_COLOR_FORMAT_RGB565);
+        lv_canvas_set_buffer(sg_main.welcome_canvas, sg_welcome_rgb565, 320, 480, LV_COLOR_FORMAT_RGB565);
         lv_obj_set_size(sg_main.welcome_canvas, 320, 480);
         lv_obj_center(sg_main.welcome_canvas);
-    } while (0);
+    }
 
     /* Bottom status label */
     sg_main.status_label = lv_label_create(sg_main.idle_page);
