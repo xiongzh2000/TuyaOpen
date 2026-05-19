@@ -32,7 +32,8 @@
       "WebFetch(domain:www.waveshare.net)",
       "WebFetch(domain:docs.waveshare.com)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "mcp__tuyaopen-docs__read_multiple_files"
     ]
   },
   "enableAllProjectMcpServers": true,
