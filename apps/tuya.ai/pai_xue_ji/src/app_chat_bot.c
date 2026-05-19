@@ -95,7 +95,7 @@ OPERATE_RET app_chat_bot_init(void)
         .default_vol  = 70,
         .evt_cb       = NULL,
     };
-    TUYA_CALL_ERR_RETURN(ai_chat_init(&ai_chat_cfg));
+    TUYA_CALL_ERR_LOG(ai_chat_init(&ai_chat_cfg));
 
 #if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
     app_ui_action_register();

@@ -18,6 +18,7 @@
 #include "tdd_disp_esp_rgb_panel.h"
 #include "tdd_tp_esp_gt911.h"
 #include "tdl_display_manage.h"
+#include "tkl_gpio.h"
 
 /***********************************************************
 ************************macro define************************
@@ -28,10 +29,11 @@
 #define I2C_SCL_IO (9)
 #define I2C_SDA_IO (8)
 
-/* CH422G IO expander pin assignments (OC pin index, bits for ch422g_set_oc_level) */
-#define CH422G_PIN_TP_RST   (1 << 1) /* EXIO1: touch reset */
-#define CH422G_PIN_LCD_BL   (1 << 2) /* EXIO2: LCD backlight enable */
-#define CH422G_PIN_SD_CS    (1 << 4) /* EXIO4: SD card chip select */
+/* CH422G IO expander pin assignments
+ * Waveshare labels "EXIO1/EXIO2" refer to CH422G OC pin indices,
+ * controlled via ch422g_set_oc_level (I2C address 0x38). */
+#define CH422G_PIN_TP_RST   (1 << 1) /* OC1: touch reset */
+#define CH422G_PIN_LCD_BL   (1 << 2) /* OC2: LCD backlight enable */
 
 /* GT911 touch */
 #define TOUCH_INT_IO (4)
@@ -66,12 +68,12 @@
 #define RGB_PCLK_IO  (7)
 
 /* RGB timing (ST7262 7" 800x480) */
-#define RGB_PCLK_HZ            (13000000)
+#define RGB_PCLK_HZ            (21000000)
 #define RGB_HSYNC_PULSE_WIDTH  (4)
-#define RGB_HSYNC_BACK_PORCH   (8)
+#define RGB_HSYNC_BACK_PORCH   (43)
 #define RGB_HSYNC_FRONT_PORCH  (8)
 #define RGB_VSYNC_PULSE_WIDTH  (4)
-#define RGB_VSYNC_BACK_PORCH   (8)
+#define RGB_VSYNC_BACK_PORCH   (12)
 #define RGB_VSYNC_FRONT_PORCH  (8)
 
 /***********************************************************
@@ -91,11 +93,24 @@ static int __board_io_expander_init(void)
         return rt;
     }
 
-    /* Reset touch controller via CH422G */
+    /* GT911 I2C address selection: INT low during reset → 0x5D (default).
+     * Drive INT (GPIO4) low BEFORE releasing reset to lock address. */
+    TUYA_GPIO_BASE_CFG_T int_out_cfg = {
+        .mode   = TUYA_GPIO_PUSH_PULL,
+        .direct = TUYA_GPIO_OUTPUT,
+        .level  = TUYA_GPIO_LEVEL_LOW,
+    };
+    tkl_gpio_init(TOUCH_INT_IO, &int_out_cfg);
+    tkl_gpio_write(TOUCH_INT_IO, TUYA_GPIO_LEVEL_LOW);
+
+    /* Reset touch controller: RST low → wait → RST high (INT stays low) */
     ch422g_set_oc_level(CH422G_PIN_TP_RST, 0);
-    tal_system_sleep(10);
+    tal_system_sleep(20);
     ch422g_set_oc_level(CH422G_PIN_TP_RST, 1);
-    tal_system_sleep(50);
+    tal_system_sleep(100);
+
+    /* Release INT pin: deinit so GT911 driver can reconfigure it */
+    tkl_gpio_deinit(TOUCH_INT_IO);
 
     /* Enable LCD backlight */
     ch422g_set_oc_level(CH422G_PIN_LCD_BL, 1);
@@ -127,7 +142,7 @@ static OPERATE_RET __board_register_display(void)
         .pclk_gpio_num  = RGB_PCLK_IO,
         .disp_gpio_num  = -1,
         .num_fbs        = 1,
-        .bounce_buffer_size_px = 0,
+        .bounce_buffer_size_px = 10 * DISPLAY_WIDTH,
         .timings = {
             .pclk_hz            = RGB_PCLK_HZ,
             .hsync_pulse_width  = RGB_HSYNC_PULSE_WIDTH,
@@ -174,7 +189,7 @@ static OPERATE_RET __board_register_display(void)
             },
         },
     };
-    TUYA_CALL_ERR_RETURN(tdd_tp_esp_i2c_gt911_register(DISPLAY_NAME, &tp_cfg));
+    TUYA_CALL_ERR_LOG(tdd_tp_esp_i2c_gt911_register(DISPLAY_NAME, &tp_cfg));
 
     return rt;
 }

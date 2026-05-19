@@ -12,7 +12,11 @@
 #define TUYA_PRODUCT_ID "p320pepzvmm1ghse"
 #endif
 
-#define TUYA_OPENSDK_UUID    "uuidxxxxxxxxxxxxxxxx"
-#define TUYA_OPENSDK_AUTHKEY "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+// #define TUYA_OPENSDK_UUID    "uuidxxxxxxxxxxxxxxxx"
+// #define TUYA_OPENSDK_AUTHKEY "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+#define TUYA_OPENSDK_UUID    "uuid66990b442eb0dbd2"
+#define TUYA_OPENSDK_AUTHKEY "JMx9KFQYyrMhkMzdbWzOSLVCbhBl9cdA"
+
 
 #endif

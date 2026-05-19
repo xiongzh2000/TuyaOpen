@@ -96,6 +96,8 @@ typedef enum {
 
     AI_UI_ACT_PRINT_IMG,
 
+    AI_UI_ACT_TALK_KEY,
+
     AI_UI_ACT_MAX
 } AI_UI_ACTION_E;
 

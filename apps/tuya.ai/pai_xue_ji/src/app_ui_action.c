@@ -8,6 +8,8 @@
 #if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
 #include "ai_ui_manage.h"
 
+extern OPERATE_RET ai_mode_handle_key(int event, void *arg);
+
 #if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
 #include "image_album.h"
 #include "ai_picture.h"
@@ -25,6 +27,14 @@ static bool sg_ai_vision_enabled = false;
 static void __app_ui_action_handle(AI_UI_ACTION_E action, uint8_t *data, uint32_t len)
 {
     switch (action) {
+    case AI_UI_ACT_TALK_KEY: {
+        if (data && len >= 1) {
+            int key_evt = (int)data[0];
+            PR_NOTICE("touch talk key event: %d", key_evt);
+            ai_mode_handle_key(key_evt, NULL);
+        }
+    } break;
+
 #if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
     case AI_UI_ACT_OPEN_CAMERA:
         sg_ai_vision_enabled = false;

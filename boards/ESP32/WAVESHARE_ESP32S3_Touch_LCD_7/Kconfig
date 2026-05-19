@@ -10,6 +10,8 @@ config BOARD_CONFIG
     bool
     default y
     select ENABLE_EXT_RAM
+    select ENABLE_AUDIO
+    select ENABLE_BUTTON
     select ENABLE_DISPLAY
     select ENABLE_TP
     select PLATFORM_FLASHSIZE_16M

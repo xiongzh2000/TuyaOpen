@@ -16,6 +16,12 @@
 #include "font_awesome_symbols.h"
 #include "ai_ui_wechat_common.h"
 #include "tal_image.h"
+#if defined(ENABLE_TP) && (ENABLE_TP == 1)
+/* TDL_BUTTON_TOUCH_EVENT_E values (from tdl_button_manage.h) */
+#define TALK_EVT_PRESS_UP          1
+#define TALK_EVT_SINGLE_CLICK      2
+#define TALK_EVT_LONG_PRESS_START  5
+#endif
 #if defined(ENABLE_IMAGE_ALBUM) && (ENABLE_IMAGE_ALBUM == 1)
 #include "image_album.h"
 #endif
@@ -86,6 +92,9 @@ typedef struct {
 #endif
 #if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
     lv_obj_t *img2img_popup;
+#endif
+#if defined(ENABLE_TP) && (ENABLE_TP == 1)
+    lv_obj_t *talk_btn;
 #endif
 } AI_UI_WECHAT_CHAT_T;
 
@@ -447,6 +456,35 @@ static void __img2img_album_cb(lv_event_t *e)
 /**
  * @brief Dismiss popup when user clicks on the chat content area.
  */
+/* ── touch talk button callbacks (touchscreen replacement for hardware button) ── */
+#if defined(ENABLE_TP) && (ENABLE_TP == 1)
+static void __talk_btn_pressed_cb(lv_event_t *e)
+{
+    (void)e;
+    PR_NOTICE("talk_btn: PRESSED");
+    lv_obj_set_style_bg_color(sg_chat.talk_btn, lv_palette_main(LV_PALETTE_GREEN), 0);
+    uint8_t evt = TALK_EVT_LONG_PRESS_START;
+    ai_ui_notify_action(AI_UI_ACT_TALK_KEY, &evt, sizeof(evt));
+}
+
+static void __talk_btn_released_cb(lv_event_t *e)
+{
+    (void)e;
+    PR_NOTICE("talk_btn: RELEASED");
+    lv_obj_set_style_bg_color(sg_chat.talk_btn, lv_color_hex(0xF5F5F5), 0);
+    uint8_t evt = TALK_EVT_PRESS_UP;
+    ai_ui_notify_action(AI_UI_ACT_TALK_KEY, &evt, sizeof(evt));
+}
+
+static void __talk_btn_click_cb(lv_event_t *e)
+{
+    (void)e;
+    PR_NOTICE("talk_btn: CLICK");
+    uint8_t evt = TALK_EVT_SINGLE_CLICK;
+    ai_ui_notify_action(AI_UI_ACT_TALK_KEY, &evt, sizeof(evt));
+}
+#endif
+
 static void __content_click_cb(lv_event_t *e)
 {
     (void)e;
@@ -1398,6 +1436,43 @@ void ai_ui_wechat_chat_init(lv_obj_t *parent)
     lv_obj_add_event_cb(i2i_album_btn, __img2img_album_cb, LV_EVENT_CLICKED, NULL);
 #endif /* ENABLE_IMAGE_ALBUM */
 #endif /* ENABLE_COMP_AI_PICTURE */
+
+    /* ── Hide "+" button if popup menu has no children ── */
+    if (lv_obj_get_child_count(sg_chat.popup_menu) == 0) {
+        lv_obj_add_flag(sg_chat.plus_btn, LV_OBJ_FLAG_HIDDEN);
+    }
+
+#if defined(ENABLE_TP) && (ENABLE_TP == 1)
+    /* ── Touch talk button — bottom center, replaces hardware button ── */
+    #define TALK_BTN_WIDTH  200
+    #define TALK_BTN_HEIGHT 44
+
+    sg_chat.talk_btn = lv_obj_create(parent);
+    lv_obj_set_size(sg_chat.talk_btn, TALK_BTN_WIDTH, TALK_BTN_HEIGHT);
+    lv_obj_align(sg_chat.talk_btn, LV_ALIGN_BOTTOM_MID, 0, -6);
+    lv_obj_set_style_bg_color(sg_chat.talk_btn, lv_color_hex(0xF5F5F5), 0);
+    lv_obj_set_style_bg_opa(sg_chat.talk_btn, LV_OPA_COVER, 0);
+    lv_obj_set_style_radius(sg_chat.talk_btn, 8, 0);
+    lv_obj_set_style_border_width(sg_chat.talk_btn, 1, 0);
+    lv_obj_set_style_border_color(sg_chat.talk_btn, lv_color_hex(0xCCCCCC), 0);
+    lv_obj_set_style_shadow_width(sg_chat.talk_btn, 4, 0);
+    lv_obj_set_style_shadow_color(sg_chat.talk_btn, lv_color_hex(0xDDDDDD), 0);
+    lv_obj_set_style_pad_all(sg_chat.talk_btn, 0, 0);
+    lv_obj_clear_flag(sg_chat.talk_btn, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(sg_chat.talk_btn, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_t *talk_label = lv_label_create(sg_chat.talk_btn);
+    lv_label_set_text(talk_label, HOLD_TALK);
+    lv_obj_set_style_text_color(talk_label, lv_color_hex(0x333333), 0);
+    lv_obj_center(talk_label);
+
+    lv_obj_add_event_cb(sg_chat.talk_btn, __talk_btn_pressed_cb, LV_EVENT_PRESSED, NULL);
+    lv_obj_add_event_cb(sg_chat.talk_btn, __talk_btn_released_cb, LV_EVENT_RELEASED, NULL);
+    lv_obj_add_event_cb(sg_chat.talk_btn, __talk_btn_click_cb, LV_EVENT_SHORT_CLICKED, NULL);
+
+    sg_chat.content->user_data = sg_chat.talk_btn;
+    lv_obj_set_size(sg_chat.content, LV_HOR_RES, LV_VER_RES - 40 - TALK_BTN_HEIGHT - 12);
+#endif
 }
 
 /**

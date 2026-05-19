@@ -1,0 +1,315 @@
+[INFO]: Running tos.py ...
+[INFO]: Running: idf.py monitor
+do subprocess: . /Users/xiongzhenhua/gitlab/embedded/TuyaOpen/platform/ESP32/esp-idf/export.sh && cd /Users/xiongzhenhua/gitlab/embedded/TuyaOpen/platform/ESP32/tuya_open_sdk && idf.py monitor
+Checking "python3" ...
+Python 3.14.0
+"python3" has been detected
+Activating ESP-IDF 5.4
+* Checking python version ... 3.14.0
+* Checking python dependencies ... OK
+* Deactivating the current ESP-IDF environment (if any) ... OK
+* Establishing a new ESP-IDF environment ... OK
+* Identifying shell ... bash
+* Detecting outdated tools in system ... OK - no outdated tools found
+* Shell completion ... Autocompletion code generated
+WARNING: Failed to load shell autocompletion for bash version: 3.2.57(1)-release!
+
+Done! You can now compile ESP-IDF projects.
+Go to the project directory and run:
+
+  idf.py build
+Executing action: monitor
+Serial port /dev/cu.usbserial-1110
+Connecting.......................
+/dev/cu.usbserial-1110 failed to connect: Failed to connect to Espressif device: No serial data received.
+For troubleshooting steps visit: https://docs.espressif.com/projects/esptool/en/latest/troubleshooting.html
+Serial port /dev/cu.usbmodem101
+Connecting...
+Detecting chip type... ESP32-S3
+Running idf_monitor in directory /Users/xiongzhenhua/gitlab/embedded/TuyaOpen/platform/ESP32/tuya_open_sdk
+Executing "/Users/xiongzhenhua/gitlab/embedded/TuyaOpen/platform/ESP32/.espressif/python_env/idf5.4_py3.14_env/bin/python /Users/xiongzhenhua/gitlab/embedded/TuyaOpen/platform/ESP32/esp-idf/tools/idf_monitor.py -p /dev/cu.usbmodem101 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 /Users/xiongzhenhua/gitlab/embedded/TuyaOpen/platform/ESP32/tuya_open_sdk/build/tuya_open_sdk.elf -m '/Users/xiongzhenhua/gitlab/embedded/TuyaOpen/platform/ESP32/.espressif/python_env/idf5.4_py3.14_env/bin/python' '/Users/xiongzhenhua/gitlab/embedded/TuyaOpen/platform/ESP32/esp-idf/tools/idf.py'"...
+--- esp-idf-monitor 1.9.0 on /dev/cu.usbmodem101 115200
+--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x15 (USB_UART_CHIP_RESET),boot:0x8 (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40048d1a
+--- 0x40048d1a: uart_rx_one_char in ROM
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x15a0
+load:0x403c8700,len:0x4
+load:0x403c8704,len:0xc80
+load:0x403cb700,len:0x2ef0
+entry 0x403c8914
+I (26) boot: ESP-IDF v5.4-dirty 2nd stage bootloader
+I (27) boot: compile time May 18 2026 10:19:28
+I (27) boot: Multicore bootloader
+I (27) boot: chip revision: v0.2
+I (27) boot: efuse block revision: v1.3
+I (27) boot.esp32s3: Boot SPI Speed : 80MHz
+I (27) boot.esp32s3: SPI Mode       : DIO
+I (28) boot.esp32s3: SPI Flash Size : 16MB
+I (28) boot: Enabling RNG early entropy source...
+I (28) boot: Partition Table:
+I (28) boot: ## Label            Usage          Type ST Offset   Length
+I (28) boot:  0 nvs              WiFi data        01 02 00009000 00004000
+I (29) boot:  1 otadata          OTA data         01 00 0000d000 00002000
+I (29) boot:  2 phy_init         RF data          01 01 0000f000 00001000
+I (30) boot:  3 ota_0            OTA app          00 10 00010000 00760000
+I (30) boot:  4 ota_1            OTA app          00 11 00770000 00760000
+I (30) boot:  5 model            Unknown data     01 82 00ed0000 000f0000
+I (31) boot:  6 tuya             Unknown data     01 aa 00fc0000 0003c000
+I (31) boot:  7 factory_nvs      WiFi data        01 02 00ffc000 00004000
+I (32) boot: End of partition table
+I (32) esp_image: segment 0: paddr=00010020 vaddr=3c130020 size=135698h (1267352) map
+I (256) esp_image: segment 1: paddr=001456c0 vaddr=3fc9ed00 size=05d8ch ( 23948) load
+I (261) esp_image: segment 2: paddr=0014b454 vaddr=40374000 size=04bc4h ( 19396) load
+I (265) esp_image: segment 3: paddr=00150020 vaddr=42000020 size=126190h (1204624) map
+I (478) esp_image: segment 4: paddr=002761b8 vaddr=40378bc4 size=16068h ( 90216) load
+I (498) esp_image: segment 5: paddr=0028c228 vaddr=600fe100 size=0001ch (    28) load
+I (509) boot: Loaded app from partition at offset 0x10000
+I (509) boot: Disabling RNG early entropy source...
+I (510) octal_psram: vendor id    : 0x0d (AP)
+I (510) octal_psram: dev id       : 0x02 (generation 3)
+I (510) octal_psram: density      : 0x03 (64 Mbit)
+I (510) octal_psram: good-die     : 0x01 (Pass)
+I (511) octal_psram: Latency      : 0x01 (Fixed)
+I (511) octal_psram: VCC          : 0x01 (3V)
+I (511) octal_psram: SRF          : 0x01 (Fast Refresh)
+I (511) octal_psram: BurstType    : 0x01 (Hybrid Wrap)
+I (511) octal_psram: BurstLen     : 0x01 (32 Byte)
+I (512) octal_psram: Readlatency  : 0x02 (10 cycles@Fixed)
+I (512) octal_psram: DriveStrength: 0x00 (1/1)
+I (513) MSPI Timing: PSRAM timing tuning index: 5
+I (513) esp_psram: Found 8MB PSRAM device
+I (513) esp_psram: Speed: 80MHz
+I (513) cpu_start: Multicore app
+I (522) cpu_start: Pro cpu start user code
+I (522) cpu_start: cpu freq: 160000000 Hz
+I (523) app_init: Application information:
+I (523) app_init: Project name:     tuya_open_sdk
+I (523) app_init: App version:      v1.1.0-115-g18eb1a1-dirty
+I (523) app_init: Compile time:     May 18 2026 10:19:13
+I (523) app_init: ELF file SHA256:  2861e7f88...
+I (523) app_init: ESP-IDF:          v5.4-dirty
+I (524) efuse_init: Min chip rev:     v0.0
+I (524) efuse_init: Max chip rev:     v0.99
+I (524) efuse_init: Chip rev:         v0.2
+I (524) heap_init: Initializing. RAM available for dynamic allocation:
+I (524) heap_init: At 3FCA7AF8 len 00041C18 (263 KiB): RAM
+I (525) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM
+I (525) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
+I (525) heap_init: At 600FE11C len 00001ECC (7 KiB): RTCRAM
+I (525) esp_psram: Adding pool of 8178K of PSRAM memory to heap allocator
+I (526) spi_flash: detected chip: generic
+I (526) spi_flash: flash io: dio
+I (527) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (527) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (528) coexist: coex firmware version: 49a8cdc
+I (528) coexist: coexist rom version e7ae62f
+I (529) main_task: Started on CPU0
+I (529) esp_psram: Reserving pool of 48K of internal memory for DMA/internal allocations
+I (529) main_task: Calling app_main()
+[01-01 00:00:00 ty N][tuya_main.c:184] Application information:
+[01-01 00:00:00 ty N][tuya_main.c:185] Project name:        pai_xue_ji
+[01-01 00:00:00 ty N][tuya_main.c:186] App version:         1.0.0
+[01-01 00:00:00 ty N][tuya_main.c:187] Compile time:        May 18 2026
+[01-01 00:00:00 ty N][tuya_main.c:188] TuyaOpen version:    v1.6.0
+[01-01 00:00:00 ty N][tuya_main.c:189] Platform chip:       esp32s3
+[01-01 00:00:00 ty N][tuya_main.c:190] Platform board:      WAVESHARE_ESP32S3_Touch_LCD_7
+[01-01 00:00:00 ty D][tal_thread.c:248] Thread:sys_timer Exec Start. Set to Running Stat
+[01-01 00:00:00 ty I][tal_thread.c:229] thread_create name:sys_timer,stackDepth:4096,totalstackDepth:4096,priority:5
+[01-01 00:00:00 ty I][tal_thread.c:229] thread_create name:wq_system,stackDepth:6144,totalstackDepth:10240,priority:3
+[01-01 00:00:00 ty D][tal_thread.c:248] Thread:wq_system Exec Start. Set to Running Stat
+[01-01 00:00:00 ty D][tal_thread.c:248] Thread:wq_highpri Exec Start. Set to Running Stat
+[01-01 00:00:00 ty I][tal_thread.c:229] thread_create name:wq_highpri,stackDepth:5120,totalstackDepth:15360,priority:4
+I (569) usb_serial_jtag echo: USB_SERIAL_JTAG init done
+[01-01 00:00:00 ty I][tal_thread.c:229] thread_create name:cli,stackDepth:3072,totalstackDepth:22528,priority:2
+[01-01 00:00:00 ty D][tal_thread.c:248] Thread:cli Exec Start. Set to Running Stat
+
+****************************************
+
+ ______                 ____
+/_  __/_ ____ _____ _  / __ \___  ___ ___
+ / / / // / // / _ `/ / /_/ / _ \/ -_) _ \
+/_/  \_,_/\_, /\_,_/  \____/ .__/\__/_//_/
+         /___/            /_/
+
+****************************************
+
+tuya> [01-01 00:00:00 ty D][tal_kv.c:202] key:rst_cnt, len 1
+[01-01 00:00:00 ty I][tal_thread.c:229] thread_create name:tuya_app_main,stackDepth:4096,totalstackDepth:19456,priority:4
+I (579) main_task: Returned from app_main()
+[01-01 00:00:00 ty I][tuya_authorize.c:121] Authorization read succeeds.
+[01-01 00:00:00 ty I][tuya_iot.c:583] tuya_iot_init
+[01-01 00:00:00 ty N][tuya_tls.c:452] tuya_tls_init ok!
+[01-01 00:00:00 ty D][tal_kv.c:270] lfs key not found: rcs.active
+[01-01 00:00:00 ty D][tal_kv.c:270] lfs key not found: rcs.mf
+[01-01 00:00:00 ty D][tuya_register_center.c:357] use default rcs [-2]
+[01-01 00:00:00 ty D][tal_kv.c:270] lfs key not found: tls_ca_cnt
+[01-01 00:00:00 ty D][tuya_cert_manager.c:454] load tls_ca_cnt fail. no ca in local db
+[01-01 00:00:00 ty D][tuya_cert_manager.c:704] psk config not available
+[01-01 00:00:00 ty D][tuya_cert_manager.c:822] cert manager init
+[01-01 00:00:00 ty D][tal_kv.c:270] lfs key not found: region
+[01-01 00:00:00 ty E][tuya_endpoint.c:74] tal_kv_get region fail:0xfffffffe
+[01-01 00:00:00 ty I][tuya_endpoint.c:272] endpoint_mgr.region:
+[01-01 00:00:00 ty I][tuya_endpoint.c:273] endpoint_mgr.regist_key:
+[01-01 00:00:00 ty D][tal_kv.c:270] lfs key not found: uuid66990b442eb0dbd2
+[01-01 00:00:00 ty W][tuya_iot.c:156] activate config not found:-2
+[01-01 00:00:00 ty D][tuya_health.c:134] add new node,type:0
+[01-01 00:00:00 ty D][tuya_health.c:134] add new node,type:1
+[01-01 00:00:00 ty D][tuya_health.c:134] add new node,type:2
+[01-01 00:00:00 ty D][tuya_health.c:134] add new node,type:3
+[01-01 00:00:00 ty D][tuya_health.c:134] add new node,type:4
+[01-01 00:00:00 ty D][tuya_health.c:134] add new node,type:5
+[01-01 00:00:00 ty D][tuya_health.c:134] add new node,type:6
+[01-01 00:00:00 ty D][tuya_health.c:134] add new node,type:7
+[01-01 00:00:00 ty D][tuya_health.c:62] init watchdog, interval: 60
+E (639) task_wdt: esp_task_wdt_init(515): TWDT already initialized
+[01-01 00:00:00 ty D][tuya_health.c:204] update type:7,period:1431655
+[01-01 00:00:00 ty D][tuya_health.c:495] watch_dog_interval:60, monitor_detect_interval:600
+[01-01 00:00:00 ty D][tal_thread.c:248] Thread:health_monitor Exec Start. Set to Running Stat
+[01-01 00:00:00 ty I][tal_thread.c:229] thread_create name:health_monitor,stackDepth:2048,totalstackDepth:24576,priority:5
+[01-01 00:00:00 ty D][tuya_mqtt_dispatch.c:205] tuya_mqtt_dispatch_init success:19
+[01-01 00:00:00 ty D][tuya_mqtt_dispatch.c:205] tuya_mqtt_dispatch_init success:22
+[01-01 00:00:00 ty D][tuya_mqtt_dispatch.c:283] dispatch register: protocol_id=19 type_name=timer_full_syn desc=device timer full sync
+[01-01 00:00:00 ty D][tuya_mqtt_dispatch.c:283] dispatch register: protocol_id=22 type_name=timer_sync desc=device timer sync
+[01-01 00:00:00 ty D][tal_kv.c:270] lfs key not found: device_timer_tasks
+[01-01 00:00:00 ty D][netmgr.c:253] netmgr [wifi] register start
+[01-01 00:00:00 ty D][netmgr.c:259] netmgr [wifi] is the first connection
+I (649) pp: pp rom version: e7ae62f
+I (649) net80211: net80211 rom version: e7ae62f
+I (659) wifi:wifi driver task: 3fcc580c, prio:23, stack:6656, core=0
+I (669) wifi:wifi firmware version: 48ea317a7
+I (669) wifi:wifi certification version: v7.0
+I (669) wifi:config NVS flash: enabled
+I (669) wifi:config nano formatting: disabled
+I (669) wifi:Init data frame dynamic rx buffer num: 32
+I (669) wifi:Init static rx mgmt buffer num: 5
+I (669) wifi:Init management short buffer num: 32
+I (679) wifi:Init static tx buffer num: 16
+I (679) wifi:Init tx cache buffer num: 32
+I (679) wifi:Init static tx FG buffer num: 2
+I (679) wifi:Init static rx buffer size: 1600
+I (679) wifi:Init static rx buffer num: 10
+I (679) wifi:Init dynamic rx buffer num: 32
+I (679) wifi_init: rx ba win: 6
+I (679) wifi_init: accept mbox: 6
+I (679) wifi_init: tcpip mbox: 32
+I (679) wifi_init: udp mbox: 6
+I (679) wifi_init: tcp mbox: 6
+I (679) wifi_init: tcp tx win: 5760
+I (679) wifi_init: tcp rx win: 5760
+I (679) wifi_init: tcp mss: 1440
+I (679) wifi_init: WiFi/LWIP prefer SPIRAM
+I (679) wifi_init: WiFi IRAM OP enabled
+I (679) wifi_init: WiFi RX IRAM OP enabled
+I (699) wifi:(2.4G)set country: cc=CN schan=1 nchan=13 policy=1
+
+I (699) BLE_INIT: BT controller compile version [d752dea]
+I (699) BLE_INIT: Bluetooth MAC: dc:b4:d9:29:ee:9a
+I (699) phy_init: phy_version 680,a6008b2,Jun  4 2024,16:41:10
+W (739) phy_init: saving new calibration data because of checksum failure, mode(0)
+[01-01 00:00:00 ty D][tuya_ble_mbuf.c:248] DYNA INIT 280,264,8,16
+[01-01 00:00:00 ty D][tuya_ble_mbuf.c:248] DYNA INIT 292,276,8,16
+[01-01 00:00:00 ty D][tal_thread.c:248] Thread:host_main_threa Exec Start. Set to Running Stat
+[01-01 00:00:00 ty I][tal_thread.c:229] thread_create name:host_main_thread_hdl,stackDepth:4096,totalstackDepth:28672,priority:9
+[01-01 00:00:00 ty D][ble_hs.c:551] ble host stage 2 start
+
+[01-01 00:00:00 ty D][ble_hs_startup.c:316] BLE HCI Version = 9
+[01-01 00:00:00 ty I][ble_hs_startup.c:145] le acl buf sz = 251,max buf = 12
+
+[01-01 00:00:00 ty I][ble_hs_hci.c:114] acl buf sz = 251, max pkt = 12, avail pkt = 12
+
+[01-01 00:00:00 ty I][ble_hs.c:433] ble_hs_timer reset:100
+[01-01 00:00:00 ty I][tkl_bluetooth.c:465] Stack sync
+[01-01 00:00:00 ty I][tkl_bluetooth.c:452] Init/Deinit Event
+[01-01 00:00:00 ty N][ble_mgr.c:1128] tuya ble init success finish
+[01-01 00:00:00 ty D][netmgr.c:383] netmgr conn wifi set 6
+[01-01 00:00:00 ty I][ble_gap.c:2248] GAP init: stop adv
+E (789) i2c.master: this port has not been initialized, please initialize it first
+[01-01 00:00:00 ty I][ble_hs.c:433] ble_hs_timer reset:0
+I (789) CH422G: CH422G initialized successfully
+I (789) gpio: GPIO[4]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:0
+[01-01 00:00:00 ty N][ble_gap.c:2509] Start Adv
+[01-01 00:00:00 ty N][ble_mgr.c:366] ble adv updated 0
+[01-01 00:00:00 ty I][ble_hs.c:393] ble_hs_timer_exp:
+I (909) gpio: GPIO[4]| InputEn: 0| OutputEn: 0| OpenDrain: 0| Pullup: 1| Pulldown: 0| Intr:0
+I (929) tdd_disp_esp_rgb: RGB panel initialized: 800x480, pclk=13000000Hz
+I (929) tdd_tp_esp_gt911: I2C bus handle retrieved successfully
+I (929) tdd_tp_esp_gt911: Initialize GT911 touch controller
+I (929) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (929) gpio: GPIO[4]| InputEn: 1| OutputEn: 0| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:2
+I (929) GT911: TouchPad_ID:0x39,0x31,0x31
+I (929) GT911: TouchPad_Config_Version:88
+[01-01 00:00:00 ty D][ai_manage_mode.c:84] ai chat mode register mode 0 success
+[01-01 00:00:00 ty D][ai_manage_mode.c:84] ai chat mode register mode 1 success
+[01-01 00:00:00 ty D][ai_manage_mode.c:84] ai chat mode register mode 2 success
+[01-01 00:00:00 ty D][ai_manage_mode.c:84] ai chat mode register mode 3 success
+[01-01 00:00:00 ty I][tal_thread.c:207] thread_create ai_ui: psram_mode=1, using PSRAM stack
+[01-01 00:0[0t:k0l0_ thtrye aDd]] [xtTaals_kCtrheraetaWdi.tch:C2ap4s8 ]O KT fhorre aadi_:uaii,_ uhain dElxee=0cx 3Sftcadcr8tc.4
+Set to Running Stat
+[01-01 00:00:00 ty I][tal_thread.c:229] thread_create name:ai_ui,stackDepth:4096,totalstackDepth:32768,priority:3
+[01-01 00:00:00 ty I][tal_thread.c:207] thread_create ai_ui_action: psram_mode=1, using PSRAM stack
+[tkl_thread] xTaskCreateWithCaps OK for ai_ui_action, handle=0x3fcdcad8
+[01-01 00:00:00 ty D][tal_thread.c:248] Thread:ai_ui_action Exec Start. Set to Running Stat
+[01-01 00:00:00 ty I][tal_thread.c:229] thread_create name:ai_ui_action,stackDepth:4096,totalstackDepth:36864,priority:3
+I (939) gpio: GPIO[0]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:0
+[01-01 00:00:00 ty N][tdl_display_manage.c:101] There is no backlight control pin on the board
+[01-01 00:00:00 ty N][tdl_display_manage.c:314] There is no backlight control pin on the board
+[01-01 00:00:00 ty N][lv_port_disp.c:340] pixel_fmt:0
+[01-01 00:00:00 ty N][lv_port_disp.c:433] lv_color_format:18
+[01-01 00:00:00 ty N][lv_port_disp.c:459] rotation:0
+[01-01 00:00:00 ty I][tal_thread.c:207] thread_create lvgl_v9: psram_mode=1, using PSRAM stack
+[01-01 00:00:00 ty D][tal_thread.c:248] Thread:lvgl_v9 Exec Start. Set to Running Stat
+[tkl_thread] xTaskCreateWithCaps OK for lvgl_v9, handle=0x3fcdce9c
+[01-01 00:00:00 ty I][tal_thread.c:229] thread_create name:lvgl_v9,stackDepth:8192,totalstackDepth:45056,priority:5
+[01-01 00:00:00 ty N][lv_vendor.c:129] lv_vendor_start complete
+
+[01-01 00:00:00 ty D][ai_ui_manage.c:543] ai chat ui init success
+[01-01 00:00:00 ty D][ai_chat_main.c:108] read ai_toy config: {"volume": 70, "chat_mode":0}
+[01-01 00:00:00 ty E][tdl_audio_manage.c:120] audio driver audio_codec not exist
+[01-01 00:00:00 ty E][ai_audio_input.c:327] ret:-2
+[01-01 00:00:00 ty E][ai_chat_main.c:415] ret:-2
+[01-01 00:00:00 ty E][app_chat_bot.c:98] ret:-2
+I (1149) wifi:Set ps type: 1, coexist: 0
+
+[01-01 00:00:00 ty D][tuya_iot.c:908] STATE_START
+[01-01 00:00:00 ty I][tuya_iot.c:928] Activation data read fail, go activation mode...
+[01-01 00:00:00 ty D][tuya_main.c:103] Tuya Event ID:1(TUYA_EVENT_BIND_START)
+[01-01 00:00:00 ty I][tuya_main.c:107] Device Bind Start!
+[01-01 00:00:00 ty N][ai_audio_player.c:470] audio player -> play alert type=2
+[01-01 00:00:00 ty E][ai_audio_player.c:349] ret:-2
+[01-01 00:00:00 ty N][ai_audio_player.c:352] audio player -> player tts mem data len 13760
+[01-01 00:00:00 ty E][ai_audio_player.c:353] ret:-2
+[01-01 00:00:00 ty E][ai_audio_player.c:354] ret:-2
+[01-01 00:00:00 ty E][ai_audio_player.c:355] ret:-2
+[01-01 00:00:00 ty E][ai_audio_player.c:117] ret:-2
+[01-01 00:00:00 ty D][netcfg.c:279] netcfg module start type:0x1
+[01-01 00:00:00 ty D][netcfg.c:279] netcfg module start type:0x2
+[01-01 00:00:00 ty D][ap_netcfg.c:856] ap cfg start:1
+I (1169) wifi:mode : softAP (dc:b4:d9:29:ee:99)
+I (1169) wifi:Total power save buffer number: 8
+I (1169) wifi:Init max length of beacon: 752/752
+I (1169) wifi:Init max length of beacon: 752/752
+I (1169) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1
+[01-01 00:00:00 ty D][ap_netcfg.c:844] start ap success:SmartLife-EE99
+[01-01 00:00:00 ty D][ap_netcfg.c:879] ap netcfg server ip:192.168.176.1
+[01-01 00:00:00 ty N][ap_netcfg.c:886] tuya ap using tls + psk
+[01-01 00:00:00 ty I][tal_thread.c:229] thread_create name:ap_cfg_task,stackDepth:4096,totalstackDepth:49152,priority:3
+[01-01 00:00:00 ty D][netcfg.c:52] start 0x1 ret:0
+[01-01 00:00:00 ty D][ble_netcfg.c:135] bt netcfg start
+[01-01 00:00:00 ty I][ble_gap.c:2248] GAP init: stop adv
+[01-01 00:00:00 ty I][ble_hs.c:433] ble_hs_timer reset:0
+[01-01 00:00:00 ty N][ble_gap.c:2509] Start Adv
+[01-01 00:00:00 ty N][ble_mgr.c:366] ble adv updated 0
+[01-01 00:00:00 ty D][netcfg.c:52] start 0x2 ret:0
+[01-01 00:00:00 ty D][tal_thread.c:248] Thread:ap_cfg_task Exec Start. Set to Running Stat
+[01-01 00:00:00 ty D][ap_netcfg.c:687] start TCP ap thread
+[01-01 00:00:00 ty D][ap_netcfg.c:317] ap try bind port:6668
+[01-01 00:00:00 ty D][ap_netcfg.c:703] Waiting for a remote connection
+[01-01 00:00:00 ty I][ble_hs.c:393] ble_hs_timer_exp:
+[01-01 00:00:05 ty D][tal_kv.c:202] key:rst_cnt, len 1
+[01-01 00:00:10 ty I][app_chat_bot.c:45] Free heap size:151875, Free psram heap size:6471852
+[01-01 00:00:20 ty I][app_chat_bot.c:45] Free heap size:151875, Free psram heap size:6471852
