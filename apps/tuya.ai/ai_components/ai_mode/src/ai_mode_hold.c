@@ -249,7 +249,11 @@ static OPERATE_RET __ai_mode_hold_handle_event(AI_NOTIFY_EVENT_T *event)
         case AI_USER_EVT_PLAY_END:{
             MODE_STATE_CHANGE(sg_mode_set_state, (sg_is_wakeup == true)? AI_MODE_STATE_LISTEN : AI_MODE_STATE_IDLE);
         }
-        break;        
+        break;
+        case AI_USER_EVT_GENERATE_PICTURE: {
+            MODE_STATE_CHANGE(sg_mode_set_state, AI_MODE_STATE_IDLE);
+        }
+        break;
         default:
         break;
     }

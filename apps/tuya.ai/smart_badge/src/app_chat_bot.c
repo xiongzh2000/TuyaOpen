@@ -14,6 +14,14 @@
 #include "tkl_wifi.h"
 #endif
 
+#if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
+#include "ai_picture.h"
+#endif
+
+#include "app_badge_ui.h"
+#include "app_gesture.h"
+#include "skill_emotion.h"
+
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
@@ -89,9 +97,47 @@ static void __display_status_tm_cb(TIMER_ID timer_id, void *arg)
 
 #endif
 
+static void __gesture_detect_cb(GESTURE_TYPE_E gesture)
+{
+    PR_NOTICE("gesture detected: %d", gesture);
+
+#if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
+    const char *emotion = NULL;
+    const char *msg = NULL;
+
+    switch (gesture) {
+    case GESTURE_SHAKE:
+        emotion = EMOJI_SURPRISE;
+        msg = "Don't shake me!";
+        break;
+    case GESTURE_TAP:
+        emotion = EMOJI_ANGRY;
+        msg = "Hey! Don't tap me!";
+        break;
+    case GESTURE_FLIP:
+        emotion = EMOJI_SLEEP;
+        msg = "Zzz...";
+        break;
+    default:
+        return;
+    }
+
+    if (emotion) {
+        ai_ui_disp_msg(AI_UI_DISP_EMOTION, (uint8_t *)emotion, strlen(emotion));
+    }
+    if (msg) {
+        ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)msg, strlen(msg));
+    }
+#endif
+}
+
 OPERATE_RET app_chat_bot_init(void)
 {
     OPERATE_RET rt = OPRT_OK;
+
+#if defined(ENABLE_AI_CHAT_CUSTOM_UI) && (ENABLE_AI_CHAT_CUSTOM_UI == 1)
+    TUYA_CALL_ERR_LOG(app_badge_ui_register());
+#endif
 
     AI_CHAT_MODE_CFG_T ai_chat_cfg = {
         .default_mode = AI_CHAT_MODE_HOLD,
@@ -99,6 +145,10 @@ OPERATE_RET app_chat_bot_init(void)
         .evt_cb       = NULL,
     };
     TUYA_CALL_ERR_LOG(ai_chat_init(&ai_chat_cfg));
+
+#if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
+    TUYA_CALL_ERR_LOG(ai_picture_init());
+#endif
 
 #if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
     app_ui_action_register();
@@ -116,6 +166,8 @@ OPERATE_RET app_chat_bot_init(void)
     tal_sw_timer_create(__display_status_tm_cb, NULL, &sg_disp_status_tm);
     tal_sw_timer_start(sg_disp_status_tm, DISP_NET_STATUS_TIME, TAL_TIMER_CYCLE);
 #endif
+
+    TUYA_CALL_ERR_LOG(app_gesture_init(__gesture_detect_cb));
 
     return OPRT_OK;
 }

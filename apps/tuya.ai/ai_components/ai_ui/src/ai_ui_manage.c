@@ -385,10 +385,15 @@ static void __ui_disp_msg_handle(AI_UI_MSG_T *msg_data)
         } break;
 
         case AI_UI_DISP_AI_IMAGE_LINK: {
-            if (sg_chat_intfs.disp_link && msg_data->data) {
-                sg_chat_intfs.disp_link(TRUE, VIEW_IMAGE, __image_link_view_cb,
-                                      msg_data->data, msg_data->len);
-                PR_NOTICE("image link");
+            if (msg_data->data) {
+                if (sg_chat_intfs.disp_image) {
+                    __image_link_view_cb(msg_data->data);
+                }
+                if (sg_chat_intfs.disp_link) {
+                    sg_chat_intfs.disp_link(TRUE, VIEW_IMAGE, __image_link_view_cb,
+                                          msg_data->data, msg_data->len);
+                }
+                PR_NOTICE("image link (auto-displayed)");
             }
         } break;
 

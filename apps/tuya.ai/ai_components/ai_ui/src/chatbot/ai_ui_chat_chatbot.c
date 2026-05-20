@@ -22,6 +22,14 @@
 
 #include "ai_ui_chat_chatbot.h"
 
+#if defined(ENABLE_IMAGE_ALBUM) && (ENABLE_IMAGE_ALBUM == 1)
+#include "tal_image.h"
+#endif
+
+#if defined(CAT_FACE_UI) && (CAT_FACE_UI == 1)
+#include "cat_faces.h"
+#endif
+
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
@@ -42,7 +50,11 @@ typedef struct {
     lv_obj_t *container;
     lv_obj_t *status_bar;
     lv_obj_t *content;
+#if defined(CAT_FACE_UI) && (CAT_FACE_UI == 1)
+    lv_obj_t *emotion_img;
+#else
     lv_obj_t *emotion_label;
+#endif
     lv_obj_t *chat_message_label;
     lv_obj_t *status_label;
     lv_obj_t *network_label;
@@ -60,6 +72,18 @@ static AI_UI_CHATBOT_T   sg_ui;
 static AI_UI_FONT_LIST_T sg_font = {0};
 static lv_timer_t       *sg_notification_tm = NULL;
 static bool              sg_is_streaming = false;
+
+#if defined(ENABLE_IMAGE_ALBUM) && (ENABLE_IMAGE_ALBUM == 1)
+static lv_obj_t   *sg_picture_canvas = NULL;
+static uint8_t    *sg_picture_buffer = NULL;
+static lv_timer_t *sg_picture_tm = NULL;
+
+typedef struct {
+    AI_UI_CHAT_LINK_CB cb;
+    void              *cb_arg;
+    uint32_t           len;
+} UI_CHATBOT_LINK_DATA_T;
+#endif
 
 /***********************************************************
 ***********************variable define**********************
@@ -192,9 +216,15 @@ static OPERATE_RET __ui_init(void)
     lv_obj_set_flex_align(sg_ui.content, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_EVENLY);
 
     // Emotion
+#if defined(CAT_FACE_UI) && (CAT_FACE_UI == 1)
+    sg_ui.emotion_img = lv_image_create(sg_ui.content);
+    lv_image_set_src(sg_ui.emotion_img, cat_face_get_by_emotion("NEUTRAL"));
+    lv_obj_set_size(sg_ui.emotion_img, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+#else
     sg_ui.emotion_label = lv_label_create(sg_ui.content);
     lv_obj_set_style_text_font(sg_ui.emotion_label, sg_font.emoji, 0);
     lv_label_set_text(sg_ui.emotion_label, sg_font.emoji_list[0].emo_icon);
+#endif
 
     // Chat message
     sg_ui.chat_message_label = lv_label_create(sg_ui.content);
@@ -351,6 +381,17 @@ static void __ui_set_system_msg(char *text)
  */
 static void __ui_set_emotion(char *emotion)
 {
+#if defined(CAT_FACE_UI) && (CAT_FACE_UI == 1)
+    if (NULL == sg_ui.emotion_img) {
+        return;
+    }
+
+    const lv_img_dsc_t *face = cat_face_get_by_emotion(emotion);
+
+    lv_vendor_disp_lock();
+    lv_image_set_src(sg_ui.emotion_img, face);
+    lv_vendor_disp_unlock();
+#else
     if (NULL == sg_ui.emotion_label) {
         return;
     }
@@ -367,6 +408,7 @@ static void __ui_set_emotion(char *emotion)
     lv_obj_set_style_text_font(sg_ui.emotion_label, sg_font.emoji, 0);
     lv_label_set_text(sg_ui.emotion_label, emo_icon);
     lv_vendor_disp_unlock();
+#endif
 }
 
 /**
@@ -444,6 +486,154 @@ static void __ui_set_chat_mode(char *chat_mode)
     lv_vendor_disp_unlock();
 }
 
+#if defined(ENABLE_IMAGE_ALBUM) && (ENABLE_IMAGE_ALBUM == 1)
+static void __ui_picture_return(void)
+{
+    if (sg_picture_tm) {
+        lv_timer_del(sg_picture_tm);
+        sg_picture_tm = NULL;
+    }
+    if (sg_picture_canvas) {
+        lv_obj_delete(sg_picture_canvas);
+        sg_picture_canvas = NULL;
+    }
+    if (sg_picture_buffer) {
+        Free(sg_picture_buffer);
+        sg_picture_buffer = NULL;
+    }
+    lv_obj_clear_flag(sg_ui.container, LV_OBJ_FLAG_HIDDEN);
+}
+
+static void __ui_picture_timeout_cb(lv_timer_t *timer)
+{
+    lv_vendor_disp_lock();
+    __ui_picture_return();
+    lv_vendor_disp_unlock();
+}
+
+static void __ui_picture_click_cb(lv_event_t *e)
+{
+    lv_vendor_disp_lock();
+    __ui_picture_return();
+    lv_vendor_disp_unlock();
+}
+
+static void __ui_disp_image(AI_UI_IMG_T *img)
+{
+    if (img == NULL || img->data == NULL || img->len == 0) {
+        return;
+    }
+
+    uint8_t  *jpeg = img->data;
+    uint32_t  jpeg_len = img->len;
+
+    TAL_IMAGE_JPEG_INFO_T info = {0};
+    if (tal_image_jpeg_get_info(jpeg, jpeg_len, &info) != OPRT_OK) {
+        PR_ERR("chatbot: jpeg get info failed");
+        return;
+    }
+
+    uint32_t rgb565_size = info.width * info.height * 2;
+    uint8_t *rgb565_buf = Malloc(rgb565_size);
+    if (rgb565_buf == NULL) {
+        PR_ERR("chatbot: malloc rgb565 buf failed, size=%u", rgb565_size);
+        return;
+    }
+
+    TAL_IMAGE_JPEG_OUTPUT_T out = {0};
+    out.out_buf      = rgb565_buf;
+    out.out_buf_size = rgb565_size;
+    out.out_width    = info.width;
+    out.out_height   = info.height;
+
+    if (tal_image_jpeg_decode_rgb565(jpeg, jpeg_len, &out) != OPRT_OK) {
+        PR_ERR("chatbot: jpeg decode rgb565 failed");
+        Free(rgb565_buf);
+        return;
+    }
+
+    PR_NOTICE("chatbot: disp_image w=%u h=%u size=%u", info.width, info.height, rgb565_size);
+
+    lv_vendor_disp_lock();
+
+    __ui_picture_return();
+
+    if (sg_picture_buffer) {
+        Free(sg_picture_buffer);
+    }
+    sg_picture_buffer = rgb565_buf;
+
+    lv_obj_t *screen = lv_screen_active();
+    sg_picture_canvas = lv_canvas_create(screen);
+    lv_canvas_set_buffer(sg_picture_canvas, sg_picture_buffer,
+                         info.width, info.height, LV_COLOR_FORMAT_RGB565);
+    lv_obj_set_size(sg_picture_canvas, info.width, info.height);
+    lv_obj_center(sg_picture_canvas);
+    lv_obj_add_flag(sg_picture_canvas, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(sg_picture_canvas, __ui_picture_click_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_add_flag(sg_ui.container, LV_OBJ_FLAG_HIDDEN);
+
+    sg_picture_tm = lv_timer_create(__ui_picture_timeout_cb, 10000, NULL);
+
+    lv_vendor_disp_unlock();
+}
+
+static void __ui_link_click_cb(lv_event_t *e)
+{
+    UI_CHATBOT_LINK_DATA_T *link_data = lv_event_get_user_data(e);
+    if (link_data && link_data->cb) {
+        link_data->cb(link_data->cb_arg);
+    }
+}
+
+static void __ui_link_delete_cb(lv_event_t *e)
+{
+    UI_CHATBOT_LINK_DATA_T *link_data = lv_event_get_user_data(e);
+    if (link_data) {
+        if (link_data->cb_arg) {
+            Free(link_data->cb_arg);
+        }
+        Free(link_data);
+    }
+}
+
+static void __ui_disp_link(bool is_ai, char *text, AI_UI_CHAT_LINK_CB cb, void *cb_arg, uint32_t len)
+{
+    if (sg_ui.chat_message_label == NULL) {
+        return;
+    }
+
+    lv_vendor_disp_lock();
+
+    lv_label_set_text(sg_ui.chat_message_label, text ? text : "");
+    lv_obj_set_style_text_color(sg_ui.chat_message_label, lv_color_hex(0x576B95), 0);
+    lv_obj_set_style_text_decor(sg_ui.chat_message_label, LV_TEXT_DECOR_UNDERLINE, 0);
+    lv_obj_add_flag(sg_ui.chat_message_label, LV_OBJ_FLAG_CLICKABLE);
+
+    if (cb) {
+        UI_CHATBOT_LINK_DATA_T *link_data = Malloc(sizeof(UI_CHATBOT_LINK_DATA_T));
+        if (link_data) {
+            link_data->cb  = cb;
+            link_data->len = len;
+            if (len > 0 && cb_arg != NULL) {
+                link_data->cb_arg = Malloc(len + 1);
+                if (link_data->cb_arg) {
+                    memcpy(link_data->cb_arg, cb_arg, len);
+                    ((char *)link_data->cb_arg)[len] = '\0';
+                }
+            } else {
+                link_data->cb_arg = cb_arg;
+            }
+            lv_obj_add_event_cb(sg_ui.chat_message_label, __ui_link_click_cb, LV_EVENT_CLICKED, link_data);
+            lv_obj_add_event_cb(sg_ui.chat_message_label, __ui_link_delete_cb, LV_EVENT_DELETE, link_data);
+        }
+    }
+
+    lv_vendor_disp_unlock();
+}
+#endif
+
 /**
  * @brief Register chatbot-style chat UI implementation.
  *
@@ -472,6 +662,11 @@ OPERATE_RET ai_ui_chat_chatbot_register(void)
     chat_intfs.disp_ai_msg_stream_data  = __ui_set_ai_msg_stream_data;
     chat_intfs.disp_ai_msg_stream_end   = __ui_set_ai_msg_stream_end;
     chat_intfs.disp_system_msg          = __ui_set_system_msg;
+
+#if defined(ENABLE_IMAGE_ALBUM) && (ENABLE_IMAGE_ALBUM == 1)
+    chat_intfs.disp_image = __ui_disp_image;
+    chat_intfs.disp_link  = __ui_disp_link;
+#endif
 
     return ai_ui_chat_register(&chat_intfs);
 }

@@ -11,6 +11,7 @@ get_filename_component(APP_NAME ${APP_PATH} NAME)
 
 # APP_SRCS
 aux_source_directory(${APP_PATH}/src APP_SRCS)
+aux_source_directory(${APP_PATH}/src/cat_faces APP_SRCS)
 
 set(APP_INC ${APP_PATH}/include)
 
@@ -28,6 +29,8 @@ target_include_directories(${EXAMPLE_LIB}
     PRIVATE
         ${APP_INC}
     )
+
+target_compile_definitions(${EXAMPLE_LIB} PRIVATE CAT_FACE_UI=1)
 
 ########################################
 # Add subdirectory

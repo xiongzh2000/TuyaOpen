@@ -125,19 +125,19 @@ External dependencies managed as git submodules: FlashDB, littlefs (KV storage),
 
 ## 技术文档
 
-`docs/` 目录下有完整的 TuyaOpen 嵌入式开发技术手册，可通过 `tuyaopen-docs` MCP server（`@modelcontextprotocol/server-filesystem`）按需读取。
+`docs/spec/` 目录下有完整的 TuyaOpen 嵌入式开发技术手册，可通过 `tuyaopen-docs` MCP server（`@modelcontextprotocol/server-filesystem`）按需读取。
 
-遇到以下问题时，**先搜索 `docs/` 目录的对应文档再回答**，不要凭训练数据猜测 API 细节：
+遇到以下问题时，**先搜索 `docs/spec/` 目录的对应文档再回答**，不要凭训练数据猜测 API 细节：
 
 | 问题类型 | 文档文件 |
 |---------|---------|
-| 编译报错、烧录失败、配网问题、环境激活 | `faq-manual.md` |
-| tos.py 命令参数 | `tos-tools-manual.md` |
-| CMake 组件写法、Kconfig 语法、`app_default.config` 配置 | `build-system-manual.md` |
-| LVGL、显示屏、音频、GPIO/UART/I2C/SPI/PWM/ADC | `tuyaopen-embedded-programming-manual.md` |
-| AI UI 消息类型、Action 枚举、聊天界面注册 | `ai-ui-components-manual.md` |
-| ESP32 引脚映射、板子适配、OTA | `esp32-hardware-manual.md` |
-| T5AI 快速上手（首次接触硬件） | `t5ai-getting-started-for-backend.md` |
+| 编译报错、烧录失败、配网问题、环境激活 | `docs/spec/faq-manual.md` |
+| tos.py 命令参数 | `docs/spec/tos-tools-manual.md` |
+| CMake 组件写法、Kconfig 语法、`app_default.config` 配置 | `docs/spec/build-system-manual.md` |
+| LVGL、显示屏、音频、GPIO/UART/I2C/SPI/PWM/ADC | `docs/spec/tuyaopen-embedded-programming-manual.md` |
+| AI UI 消息类型、Action 枚举、聊天界面注册 | `docs/spec/ai-ui-components-manual.md` |
+| ESP32 引脚映射、板子适配、OTA | `docs/spec/esp32-hardware-manual.md` |
+| T5AI 快速上手（首次接触硬件） | `docs/spec/t5ai-getting-started-for-backend.md` |
 
 > `lang_config.h` 是自动生成文件，字符串常量修改必须改 `assets/language/zh-CN/language.json`，不能直接改头文件（clean 后会被覆盖）。
 

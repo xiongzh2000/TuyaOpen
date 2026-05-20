@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能电子吧唧 - 产品介绍</title>
+<style>
+  :root {
+    --green: #4CD964;
+    --dark: #1a1a2e;
+    --gray: #8892b0;
+    --light: #f8f9fa;
+    --accent: #4CD964;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    color: #333;
+    background: #fff;
+    line-height: 1.8;
+  }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    padding: 80px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(76,217,100,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(76,217,100,0.05) 0%, transparent 50%);
+    animation: pulse 8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  .hero h1 {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--green); }
+  .hero .subtitle {
+    font-size: 20px;
+    color: rgba(255,255,255,0.6);
+    position: relative;
+    letter-spacing: 2px;
+  }
+  .hero .badge-visual {
+    position: relative;
+    margin: 40px auto 0;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #222, #111);
+    border: 3px solid var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 60px rgba(76,217,100,0.2), inset 0 0 30px rgba(0,0,0,0.5);
+  }
+  .badge-visual .face { font-size: 80px; }
+  .badge-visual .arc {
+    position: absolute;
+    top: -6px; left: -6px;
+    width: 212px; height: 212px;
+    border-radius: 50%;
+    border: 4px solid transparent;
+    border-top-color: var(--green);
+    border-right-color: var(--green);
+    border-bottom-color: transparent;
+    animation: spin 4s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Section */
+  .section {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 60px 40px;
+  }
+  .section-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 40px;
+    text-align: center;
+    position: relative;
+  }
+  .section-title::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: var(--green);
+    margin: 12px auto 0;
+    border-radius: 2px;
+  }
+
+  /* Feature Grid */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .feature-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+    border-color: var(--green);
+  }
+  .feature-card .icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 16px;
+  }
+  .feature-card h3 {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #1a1a2e;
+  }
+  .feature-card p {
+    font-size: 13px;
+    color: var(--gray);
+    line-height: 1.6;
+  }
+  .icon-ai { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+  .icon-ui { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
+  .icon-gesture { background: linear-gradient(135deg, #fff3e0, #ffe0b2); }
+  .icon-step { background: linear-gradient(135deg, #e8f5e9, #a5d6a7); }
+  .icon-weather { background: linear-gradient(135deg, #e1f5fe, #b3e5fc); }
+  .icon-album { background: linear-gradient(135deg, #fce4ec, #f8bbd0); }
+
+  /* UI Pages */
+  .ui-showcase {
+    background: var(--light);
+    padding: 60px 40px;
+  }
+  .pages-row {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .page-demo {
+    text-align: center;
+  }
+  .page-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    position: relative;
+    font-size: 13px;
+    color: #555;
+    border: 2px solid #ddd;
+    overflow: hidden;
+  }
+  .page-circle.clock {
+    background: #fff;
+    border-color: var(--green);
+    box-shadow: 0 4px 20px rgba(76,217,100,0.15);
+  }
+  .page-circle.chat { background: #fff; }
+  .page-circle.album { background: #111; color: #aaa; }
+  .page-circle .time {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+    letter-spacing: 2px;
+  }
+  .page-circle .cat { font-size: 40px; margin: 4px 0; }
+  .page-circle .meta { font-size: 11px; color: #999; }
+  .page-circle .weather { font-size: 11px; color: var(--green); }
+  .page-circle .arc-ring {
+    position: absolute;
+    top: 4px; left: 4px;
+    width: 172px; height: 172px;
+    border-radius: 50%;
+    border: 3px solid #e0e0e0;
+    border-top-color: var(--green);
+    border-right-color: var(--green);
+    border-left-color: var(--green);
+  }
+  .page-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+  }
+  .page-label small {
+    display: block;
+    font-weight: 400;
+    font-size: 12px;
+    color: #999;
+    margin-top: 2px;
+  }
+  .swipe-hint {
+    text-align: center;
+    color: #bbb;
+    font-size: 13px;
+    margin-top: 24px;
+    letter-spacing: 4px;
+  }
+
+  /* Advantage */
+  .advantages {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .adv-card {
+    display: flex;
+    gap: 16px;
+    padding: 24px;
+    border-radius: 12px;
+    background: var(--light);
+  }
+  .adv-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--green);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .adv-card h4 { font-size: 15px; margin-bottom: 4px; color: #1a1a2e; }
+  .adv-card p { font-size: 13px; color: var(--gray); }
+
+  /* Specs */
+  .specs-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  .specs-table th, .specs-table td {
+    padding: 14px 20px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+  }
+  .specs-table th {
+    background: var(--light);
+    color: var(--gray);
+    font-weight: 500;
+    width: 160px;
+  }
+  .specs-table td { color: #333; }
+  .specs-table tr:last-child th,
+  .specs-table tr:last-child td { border-bottom: none; }
+
+  /* Arch */
+  .arch-box {
+    background: #1a1a2e;
+    border-radius: 16px;
+    padding: 32px;
+    color: #ccd6f6;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 13px;
+    line-height: 2;
+    overflow-x: auto;
+    max-width: 700px;
+    margin: 20px auto 0;
+  }
+  .arch-box .layer { color: var(--green); }
+  .arch-box .comp { color: #8892b0; }
+  .arch-box .highlight { color: #fff; font-weight: 600; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 40px;
+    color: #bbb;
+    font-size: 13px;
+    border-top: 1px solid #eee;
+  }
+  .footer strong { color: #666; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .features { grid-template-columns: 1fr; }
+    .advantages { grid-template-columns: 1fr; }
+    .pages-row { gap: 20px; }
+    .hero h1 { font-size: 32px; }
+    .section { padding: 40px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>智能电子<span>吧唧</span></h1>
+  <div class="subtitle">AI-Powered Smart Badge &mdash; 基于 TuyaOpen 的可穿戴 AI 交互终端</div>
+  <div class="badge-visual">
+    <div class="arc"></div>
+    <div class="face">&#x1F431;</div>
+  </div>
+</div>
+
+<!-- 产品定位 -->
+<div class="section">
+  <h2 class="section-title">产品定位</h2>
+  <p style="text-align:center; color:#666; max-width:680px; margin:0 auto; font-size:15px;">
+    智能电子吧唧是一款基于涂鸦 T5AI 芯片的圆形 AMOLED 可穿戴设备。
+    集成 AI 语音对话、图片生成、运动健康、天气服务于一体，
+    以卡通猫表情为核心交互语言，打造有温度的随身 AI 伴侣。
+  </p>
+</div>
+
+<!-- 三页 UI -->
+<div class="ui-showcase">
+  <h2 class="section-title">三页滑动交互</h2>
+  <div class="pages-row">
+    <div class="page-demo">
+      <div class="page-circle album">
+        <div style="font-size:36px; opacity:0.4;">&#x1F5BC;</div>
+        <div class="meta" style="color:#666;">AI 生成图片</div>
+      </div>
+      <div class="page-label">相册页<small>左滑进入</small></div>
+    </div>
+    <div class="page-demo">
+      <div class="page-circle clock">
+        <div class="arc-ring"></div>
+        <div class="meta">100%</div>
+        <div class="time">14:30</div>
+        <div class="cat">&#x1F431;</div>
+        <div class="meta">2026/5/20</div>
+        <div class="weather">25°C Sunny</div>
+      </div>
+      <div class="page-label">主屏时钟<small>默认显示</small></div>
+    </div>
+    <div class="page-demo">
+      <div class="page-circle chat">
+        <div style="font-size:11px; color:#999;">LISTENING</div>
+        <div class="cat">&#x1F431;</div>
+        <div style="font-size:11px; color:#333; padding:0 12px;">你好，今天天气真不错！</div>
+      </div>
+      <div class="page-label">聊天页<small>右滑进入</small></div>
+    </div>
+  </div>
+  <div class="swipe-hint">&larr; 滑动切换 &rarr;</div>
+</div>
+
+<!-- 核心功能 -->
+<div class="section">
+  <h2 class="section-title">核心功能</h2>
+  <div class="features">
+    <div class="feature-card">
+      <div class="icon icon-ai">&#x1F399;</div>
+      <h3>AI 语音对话</h3>
+      <p>长按说话，松手发送。支持流式 ASR + TTS，对话响应快速自然，支持多轮上下文。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-album">&#x1F3A8;</div>
+      <h3>AI 图片生成</h3>
+      <p>语音描述即可生成图片，自动存入相册。支持上下滑动浏览，长按删除管理。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-gesture">&#x1F44B;</div>
+      <h3>手势互动</h3>
+      <p>内置 QMI8658 六轴 IMU，支持甩动、敲击、翻转三种手势，触发猫咪不同表情反应。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-step">&#x1F6B6;</div>
+      <h3>智能计步</h3>
+      <p>动态阈值计步算法，自适应佩戴位置。Apple Watch 风格圆弧进度环，每日目标 1000 步。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-weather">&#x2600;</div>
+      <h3>天气服务</h3>
+      <p>接入涂鸦云天气 API，自动获取当前温度与天气状况，30 分钟自动刷新。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-ui">&#x1F431;</div>
+      <h3>表情系统</h3>
+      <p>卡通猫表情贯穿全场景：对话状态、手势响应、情绪反馈，让冰冷设备有温度。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 产品优势 -->
+<div class="section" style="background: var(--light); max-width: 100%; padding: 60px 40px;">
+  <h2 class="section-title">产品优势</h2>
+  <div class="advantages">
+    <div class="adv-card">
+      <div class="adv-num">1</div>
+      <div>
+        <h4>全栈自研，深度整合</h4>
+        <p>基于 TuyaOpen SDK 全栈开发，AI 服务、云端、固件、UI 深度整合，非简单方案拼凑。自定义 UI 框架完全掌控交互体验。</p>
+      </div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-num">2</div>
+      <div>
+        <h4>多模态 AI 交互</h4>
+        <p>语音 + 图片生成 + 手势，三种交互通道融合。不只是"能说话的设备"，而是能看、能画、能感知动作的 AI 伴侣。</p>
+      </div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-num">3</div>
+      <div>
+        <h4>情感化设计</h4>
+        <p>卡通猫表情系统让 AI 有"表情"，手势触发即时情绪反馈。将冷冰冰的可穿戴变成有温度的随身伙伴，提升用户粘性。</p>
+      </div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-num">4</div>
+      <div>
+        <h4>低成本量产方案</h4>
+        <p>T5AI 单芯片集成 WiFi + AI 推理 + 音频编解码，BOM 成本可控。1.75 寸圆形 AMOLED 兼顾颜值与功耗，适合饰品化量产。</p>
+      </div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-num">5</div>
+      <div>
+        <h4>运动健康闭环</h4>
+        <p>软件计步算法 + 动态阈值自适应，无需额外传感器。Apple Watch 风格进度环，直观展示运动目标，为健康场景打下基础。</p>
+      </div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-num">6</div>
+      <div>
+        <h4>跨平台可复用</h4>
+        <p>核心 AI 组件（语音、图片、UI 框架）基于 TuyaOpen 组件模型，可快速移植到 T2/T3/ESP32 等平台，一套代码多产品复用。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 硬件规格 -->
+<div class="section">
+  <h2 class="section-title">硬件平台</h2>
+  <table class="specs-table">
+    <tr><th>主控芯片</th><td>涂鸦 T5AI (BK7258) &mdash; 双核 ARM Cortex-M33, 内置 WiFi/BLE</td></tr>
+    <tr><th>开发板</th><td>微雪 T5-E1 Touch AMOLED 1.75"</td></tr>
+    <tr><th>显示屏</th><td>1.75 寸圆形 AMOLED, 466&times;466, QSPI 接口</td></tr>
+    <tr><th>触控</th><td>CST9217 电容触控 (I2C)</td></tr>
+    <tr><th>运动传感器</th><td>QMI8658 六轴 IMU &mdash; 加速度计 + 陀螺仪 (I2C)</td></tr>
+    <tr><th>音频</th><td>板载麦克风 + 扬声器，Opus 编解码</td></tr>
+    <tr><th>连接</th><td>WiFi 2.4GHz，涂鸦云 MQTT + AI Agent 服务</td></tr>
+  </table>
+</div>
+
+<!-- 技术架构 -->
+<div class="section" style="background: var(--light); max-width: 100%; padding: 60px 40px;">
+  <h2 class="section-title">软件架构</h2>
+  <div class="arch-box">
+<span class="layer">Application Layer</span>
+├── <span class="highlight">app_badge_ui.c</span>    <span class="comp">三页滑动 UI (LVGL v9)</span>
+├── <span class="highlight">app_chat_bot.c</span>    <span class="comp">AI 对话入口 + 手势映射</span>
+├── <span class="highlight">app_gesture.c</span>     <span class="comp">手势检测 + 计步算法</span>
+├── app_qmi8658.c     <span class="comp">IMU 驱动 (I2C)</span>
+└── cat_faces.c       <span class="comp">猫表情图片资源</span>
+
+<span class="layer">AI Components (TuyaOpen)</span>
+├── ai_mode_hold      <span class="comp">长按说话模式状态机</span>
+├── ai_audio_input    <span class="comp">麦克风采集 + VAD</span>
+├── ai_audio_player   <span class="comp">TTS 播放</span>
+├── ai_picture        <span class="comp">图片生成 + 相册管理</span>
+└── ai_ui_manage      <span class="comp">UI 消息分发框架</span>
+
+<span class="layer">SDK / Platform</span>
+├── tuya_ai_agent     <span class="comp">AI Agent 云端通信</span>
+├── tuya_weather      <span class="comp">天气数据服务</span>
+├── TAL (OS 抽象层)   <span class="comp">线程 / 定时器 / I2C / 内存</span>
+└── T5AI Platform     <span class="comp">BK7258 BSP + 工具链</span>
+  </div>
+</div>
+
+<!-- 后续规划 -->
+<div class="section">
+  <h2 class="section-title">后续规划</h2>
+  <div style="display:flex; gap:40px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
+    <div style="text-align:center; flex:1; min-width:180px;">
+      <div style="font-size:32px; margin-bottom:8px;">&#x1F50B;</div>
+      <div style="font-weight:600; font-size:14px;">电量管理</div>
+      <div style="font-size:12px; color:#999; margin-top:4px;">接入真实电压采集<br>低电量提醒</div>
+    </div>
+    <div style="text-align:center; flex:1; min-width:180px;">
+      <div style="font-size:32px; margin-bottom:8px;">&#x1F4F1;</div>
+      <div style="font-weight:600; font-size:14px;">名片二维码</div>
+      <div style="font-size:12px; color:#999; margin-top:4px;">长按显示个人二维码<br>Badge 本职功能</div>
+    </div>
+    <div style="text-align:center; flex:1; min-width:180px;">
+      <div style="font-size:32px; margin-bottom:8px;">&#x1F345;</div>
+      <div style="font-weight:600; font-size:14px;">番茄钟</div>
+      <div style="font-size:12px; color:#999; margin-top:4px;">利用圆弧 UI<br>手势启停计时</div>
+    </div>
+    <div style="text-align:center; flex:1; min-width:180px;">
+      <div style="font-size:32px; margin-bottom:8px;">&#x1F3AE;</div>
+      <div style="font-weight:600; font-size:14px;">互动小游戏</div>
+      <div style="font-size:12px; color:#999; margin-top:4px;">手势驱动的休闲游戏<br>提升趣味性</div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <strong>智能电子吧唧</strong> &mdash; Powered by TuyaOpen &amp; T5AI<br>
+  <span style="font-size:12px;">2026.05 内部汇报</span>
+</div>
+
+</body>
+</html>
