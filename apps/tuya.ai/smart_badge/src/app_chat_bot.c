@@ -20,6 +20,7 @@
 
 #include "app_badge_ui.h"
 #include "app_gesture.h"
+#include "app_http_upload.h"
 #include "skill_emotion.h"
 
 /***********************************************************
@@ -168,6 +169,8 @@ OPERATE_RET app_chat_bot_init(void)
 #endif
 
     TUYA_CALL_ERR_LOG(app_gesture_init(__gesture_detect_cb));
+
+    TUYA_CALL_ERR_LOG(app_http_upload_init());
 
     return OPRT_OK;
 }

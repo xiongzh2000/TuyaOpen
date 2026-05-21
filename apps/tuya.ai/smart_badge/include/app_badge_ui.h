@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 OPERATE_RET app_badge_ui_register(void);
+void app_badge_ui_album_add_jpeg(const uint8_t *data, uint32_t len);
 
 #ifdef __cplusplus
 }

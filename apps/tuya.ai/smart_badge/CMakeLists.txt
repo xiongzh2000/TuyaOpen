@@ -15,6 +15,10 @@ aux_source_directory(${APP_PATH}/src/cat_faces APP_SRCS)
 
 set(APP_INC ${APP_PATH}/include)
 
+set(QRCODE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../src/common/qrcode)
+list(APPEND APP_SRCS ${QRCODE_DIR}/qrcodegen.c)
+list(APPEND APP_INC ${QRCODE_DIR})
+
 ########################################
 # Target Configure
 ########################################

@@ -14,6 +14,7 @@
 #include "ai_ui_icon_font.h"
 #include "cat_faces.h"
 #include "app_badge_ui.h"
+#include "app_http_upload.h"
 #include "skill_emotion.h"
 #include "app_gesture.h"
 #include "tuya_weather.h"
@@ -84,6 +85,7 @@ static lv_obj_t *sg_album_slots[ALBUM_MAX_IMAGES];
 static int sg_album_count = 0;
 static lv_obj_t *sg_album_del_overlay = NULL;
 static int sg_album_del_idx = -1;
+static lv_obj_t *sg_album_upload_btn = NULL;
 static void __ui_album_add_image(AI_UI_IMG_T *img);
 #endif
 
@@ -360,6 +362,18 @@ static void __create_chat_page(lv_obj_t *parent)
 
 /* ==================== Album Page ==================== */
 
+static void __album_upload_btn_cb(lv_event_t *e)
+{
+    (void)e;
+    lv_vendor_disp_lock();
+    if (sg_album_del_overlay) {
+        lv_obj_delete(sg_album_del_overlay);
+        sg_album_del_overlay = NULL;
+    }
+    lv_vendor_disp_unlock();
+    app_http_upload_show_qr();
+}
+
 static void __create_album_page(lv_obj_t *parent)
 {
     sg_ui.album_page = lv_obj_create(parent);
@@ -391,6 +405,22 @@ static void __create_album_page(lv_obj_t *parent)
     lv_obj_set_style_text_align(sg_ui.album_hint_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_label_set_text(sg_ui.album_hint_label, "\nNo images yet\n\nAsk AI to generate one!");
     lv_obj_set_flex_grow(sg_ui.album_hint_label, 0);
+
+    /* Upload button (floating, only visible when album is empty) */
+    sg_album_upload_btn = lv_button_create(sg_ui.album_page);
+    lv_obj_set_size(sg_album_upload_btn, 50, 50);
+    lv_obj_align(sg_album_upload_btn, LV_ALIGN_BOTTOM_MID, 0, -30);
+    lv_obj_set_style_bg_color(sg_album_upload_btn, lv_color_hex(0x4CAF50), 0);
+    lv_obj_set_style_bg_opa(sg_album_upload_btn, LV_OPA_80, 0);
+    lv_obj_set_style_radius(sg_album_upload_btn, 25, 0);
+    lv_obj_set_style_shadow_width(sg_album_upload_btn, 8, 0);
+    lv_obj_set_style_shadow_opa(sg_album_upload_btn, LV_OPA_30, 0);
+    lv_obj_add_event_cb(sg_album_upload_btn, __album_upload_btn_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_t *btn_label = lv_label_create(sg_album_upload_btn);
+    lv_label_set_text(btn_label, "+");
+    lv_obj_set_style_text_color(btn_label, lv_color_white(), 0);
+    lv_obj_center(btn_label);
 }
 
 /* ==================== AI UI Callbacks ==================== */
@@ -653,6 +683,9 @@ static void __album_del_confirm_cb(lv_event_t *e)
 
         if (sg_album_count == 0) {
             lv_obj_clear_flag(sg_ui.album_hint_label, LV_OBJ_FLAG_HIDDEN);
+            if (sg_album_upload_btn) {
+                lv_obj_clear_flag(sg_album_upload_btn, LV_OBJ_FLAG_HIDDEN);
+            }
         }
     }
     lv_vendor_disp_unlock();
@@ -688,17 +721,29 @@ static void __album_long_press_cb(lv_event_t *e)
     lv_obj_add_event_cb(sg_album_del_overlay, __album_del_dismiss_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_clear_flag(sg_album_del_overlay, LV_OBJ_FLAG_SCROLLABLE);
 
-    lv_obj_t *btn = lv_button_create(sg_album_del_overlay);
-    lv_obj_set_size(btn, 140, 50);
-    lv_obj_center(btn);
-    lv_obj_set_style_bg_color(btn, lv_color_hex(0xEE4444), 0);
-    lv_obj_set_style_radius(btn, 25, 0);
-    lv_obj_add_event_cb(btn, __album_del_confirm_cb, LV_EVENT_CLICKED, NULL);
+    lv_obj_t *del_btn = lv_button_create(sg_album_del_overlay);
+    lv_obj_set_size(del_btn, 140, 50);
+    lv_obj_align(del_btn, LV_ALIGN_CENTER, 0, -35);
+    lv_obj_set_style_bg_color(del_btn, lv_color_hex(0xEE4444), 0);
+    lv_obj_set_style_radius(del_btn, 25, 0);
+    lv_obj_add_event_cb(del_btn, __album_del_confirm_cb, LV_EVENT_CLICKED, NULL);
 
-    lv_obj_t *label = lv_label_create(btn);
-    lv_label_set_text(label, "Delete");
-    lv_obj_set_style_text_color(label, lv_color_white(), 0);
-    lv_obj_center(label);
+    lv_obj_t *del_label = lv_label_create(del_btn);
+    lv_label_set_text(del_label, "Delete");
+    lv_obj_set_style_text_color(del_label, lv_color_white(), 0);
+    lv_obj_center(del_label);
+
+    lv_obj_t *add_btn = lv_button_create(sg_album_del_overlay);
+    lv_obj_set_size(add_btn, 140, 50);
+    lv_obj_align(add_btn, LV_ALIGN_CENTER, 0, 35);
+    lv_obj_set_style_bg_color(add_btn, lv_color_hex(0x4CAF50), 0);
+    lv_obj_set_style_radius(add_btn, 25, 0);
+    lv_obj_add_event_cb(add_btn, __album_upload_btn_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_t *add_label = lv_label_create(add_btn);
+    lv_label_set_text(add_label, "Upload");
+    lv_obj_set_style_text_color(add_label, lv_color_white(), 0);
+    lv_obj_center(add_label);
 
     lv_vendor_disp_unlock();
 }
@@ -715,9 +760,12 @@ static void __ui_album_add_image(AI_UI_IMG_T *img)
 
     lv_vendor_disp_lock();
 
-    /* Hide hint on first image */
+    /* Hide hint and upload button on first image */
     if (sg_album_count == 0) {
         lv_obj_add_flag(sg_ui.album_hint_label, LV_OBJ_FLAG_HIDDEN);
+        if (sg_album_upload_btn) {
+            lv_obj_add_flag(sg_album_upload_btn, LV_OBJ_FLAG_HIDDEN);
+        }
     }
 
     /* Create a full-page container for this image */
@@ -744,6 +792,16 @@ static void __ui_album_add_image(AI_UI_IMG_T *img)
     lv_obj_scroll_to_y(sg_ui.album_scroll, (sg_album_count - 1) * PAGE_H, LV_ANIM_OFF);
 
     lv_vendor_disp_unlock();
+}
+
+void app_badge_ui_album_add_jpeg(const uint8_t *data, uint32_t len)
+{
+    if (data == NULL || len == 0) return;
+    AI_UI_IMG_T img = {
+        .data = (uint8_t *)data,
+        .len  = len,
+    };
+    __ui_album_add_image(&img);
 }
 
 static void __ui_disp_link(bool is_ai, char *text, AI_UI_CHAT_LINK_CB cb, void *cb_arg, uint32_t len)
