@@ -16,8 +16,12 @@
 
 #if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
 #include "ai_picture.h"
+#if defined(ENABLE_COMP_AI_PICTURE_HOSTING_DLD) && (ENABLE_COMP_AI_PICTURE_HOSTING_DLD == 1)
+#include "ai_picture_output.h"
+#endif
 #endif
 
+#include "tkl_gpio.h"
 #include "app_badge_ui.h"
 #include "app_gesture.h"
 #include "app_http_upload.h"
@@ -42,8 +46,43 @@ static TIMER_ID            sg_disp_status_tm;
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
+#if defined(BOARD_CHOICE_WAVESHARE_T5AI_TOUCH_AMOLED_1_75) && (BOARD_CHOICE_WAVESHARE_T5AI_TOUCH_AMOLED_1_75 == 1)
+static void __sd_gpio_silence(void)
+{
+    /* SD card slot shares 3V3 rail with touch I2C; when a card is inserted,
+       floating SDIO GPIO lines cause electrical noise that disrupts I2C.
+       Drive them high (matching external 10K pull-ups) to suppress this. */
+    static const TUYA_GPIO_NUM_E sd_pins[] = {
+        TUYA_GPIO_NUM_2,   // SD_CLK
+        TUYA_GPIO_NUM_3,   // SD_CMD
+        TUYA_GPIO_NUM_4,   // SD_D0
+        TUYA_GPIO_NUM_5,   // SD_D1
+        TUYA_GPIO_NUM_10,  // SD_D2
+        TUYA_GPIO_NUM_11,  // SD_D3
+    };
+    TUYA_GPIO_BASE_CFG_T cfg = {
+        .mode   = TUYA_GPIO_PUSH_PULL,
+        .direct = TUYA_GPIO_OUTPUT,
+        .level  = TUYA_GPIO_LEVEL_HIGH,
+    };
+    for (int i = 0; i < (int)(sizeof(sd_pins) / sizeof(sd_pins[0])); i++) {
+        tkl_gpio_init(sd_pins[i], &cfg);
+        tkl_gpio_write(sd_pins[i], TUYA_GPIO_LEVEL_HIGH);
+    }
+    PR_NOTICE("SD card GPIO pins silenced (IO2-5, IO10-11 → output high)");
+}
+#endif
+
 #if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
 extern void app_ui_action_register(void);
+#endif
+
+#if defined(ENABLE_IMAGE_ALBUM_STORAGE_SD) && (ENABLE_IMAGE_ALBUM_STORAGE_SD == 1)
+static void __load_album_task(void *arg)
+{
+    (void)arg;
+    app_badge_ui_load_album();
+}
 #endif
 
 static void __printf_free_heap_tm_cb(TIMER_ID timer_id, void *arg)
@@ -136,6 +175,10 @@ OPERATE_RET app_chat_bot_init(void)
 {
     OPERATE_RET rt = OPRT_OK;
 
+#if defined(BOARD_CHOICE_WAVESHARE_T5AI_TOUCH_AMOLED_1_75) && (BOARD_CHOICE_WAVESHARE_T5AI_TOUCH_AMOLED_1_75 == 1)
+    __sd_gpio_silence();
+#endif
+
 #if defined(ENABLE_AI_CHAT_CUSTOM_UI) && (ENABLE_AI_CHAT_CUSTOM_UI == 1)
     TUYA_CALL_ERR_LOG(app_badge_ui_register());
 #endif
@@ -149,6 +192,21 @@ OPERATE_RET app_chat_bot_init(void)
 
 #if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
     TUYA_CALL_ERR_LOG(ai_picture_init());
+#if defined(ENABLE_COMP_AI_PICTURE_HOSTING_DLD) && (ENABLE_COMP_AI_PICTURE_HOSTING_DLD == 1)
+    TUYA_CALL_ERR_LOG(ai_picture_output_dld_init(466, 466));
+#endif
+#endif
+
+#if defined(ENABLE_IMAGE_ALBUM_STORAGE_SD) && (ENABLE_IMAGE_ALBUM_STORAGE_SD == 1)
+    {
+        THREAD_HANDLE load_thd = NULL;
+        THREAD_CFG_T load_cfg = {
+            .thrdname   = "load_album",
+            .priority   = THREAD_PRIO_3,
+            .stackDepth = 8192,
+        };
+        tal_thread_create_and_start(&load_thd, NULL, NULL, __load_album_task, NULL, &load_cfg);
+    }
 #endif
 
 #if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)

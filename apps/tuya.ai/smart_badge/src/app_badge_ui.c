@@ -804,6 +804,44 @@ void app_badge_ui_album_add_jpeg(const uint8_t *data, uint32_t len)
     __ui_album_add_image(&img);
 }
 
+#if defined(ENABLE_IMAGE_ALBUM_STORAGE_SD) && (ENABLE_IMAGE_ALBUM_STORAGE_SD == 1)
+#include "image_album_storage.h"
+
+void app_badge_ui_load_album(void)
+{
+    IMAGE_ALBUM_HANDLE album = ai_picture_get_album_handle();
+    if (!album) {
+        PR_WARN("load_album: album handle is NULL");
+        return;
+    }
+
+    uint32_t count = 0;
+    image_album_get_committed_count(album, &count);
+    PR_NOTICE("load_album: %u images to load", (unsigned)count);
+    if (count == 0) return;
+
+    char *prev_filename = NULL;
+    ALBUM_IMAGE_ITEM_T item;
+    uint32_t loaded = 0;
+
+    while (image_album_get_next_item(album, prev_filename,
+               IMAGE_ALBUM_STORAGE_TP_MEMORY, &item) == OPRT_OK) {
+        uint8_t *jpeg_data = NULL;
+        size_t jpeg_size = 0;
+        if (image_album_read(album, item.filename, 0, &jpeg_data, &jpeg_size) == OPRT_OK) {
+            AI_UI_IMG_T img = { .data = jpeg_data, .len = (uint32_t)jpeg_size };
+            __ui_album_add_image(&img);
+            image_album_free_file_data(jpeg_data);
+            loaded++;
+            PR_DEBUG("load_album: loaded %s (%u bytes)", item.filename, (unsigned)jpeg_size);
+        }
+        prev_filename = item.filename;
+    }
+
+    PR_NOTICE("load_album: %u images loaded to UI", (unsigned)loaded);
+}
+#endif
+
 static void __ui_disp_link(bool is_ai, char *text, AI_UI_CHAT_LINK_CB cb, void *cb_arg, uint32_t len)
 {
     (void)is_ai;

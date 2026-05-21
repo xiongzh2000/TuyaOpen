@@ -170,6 +170,7 @@ static OPERATE_RET __sd_save(void *handle, const char *filename,
     }
 
     int written = tkl_fwrite((void *)data, (int)size, fp);
+    tkl_fsync((int32_t)(intptr_t)fp);
     tkl_fclose(fp);
 
     if (written != (int)size) {
