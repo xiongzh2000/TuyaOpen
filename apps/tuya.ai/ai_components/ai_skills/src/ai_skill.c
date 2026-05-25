@@ -44,6 +44,21 @@ static bool __s_nlg_in_stream = false;
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
+static void __strip_emoji_inplace(char *str)
+{
+    if (!str) return;
+    char *rd = str, *wr = str;
+    while (*rd) {
+        if ((uint8_t)*rd >= 0xF0) {
+            rd++;
+            while (*rd && ((uint8_t)*rd & 0xC0) == 0x80) rd++;
+        } else {
+            *wr++ = *rd++;
+        }
+    }
+    *wr = '\0';
+}
+
 static const char *__json_get_string(const cJSON *item)
 {
     if (item == NULL || !cJSON_IsString(item) || item->valuestring == NULL) {
@@ -146,6 +161,7 @@ static OPERATE_RET __ai_nlg_process(cJSON *root, bool eof)
     if (!content) {
         content = "";
     }
+    __strip_emoji_inplace(content);
 
     AI_NOTIFY_TEXT_T text;
     text.data      = (char *)content;

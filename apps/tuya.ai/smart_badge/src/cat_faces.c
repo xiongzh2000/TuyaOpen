@@ -12,24 +12,39 @@ typedef struct {
 } CAT_FACE_MAP_T;
 
 static const CAT_FACE_MAP_T sg_face_map[] = {
-    {"NEUTRAL",      &icon_cat_neutral},
-    {"HAPPY",        &icon_cat_happy},
+    /* 13 primary emotions */
+    {"HAPPY",        &icon_cat_happy},        /* 开心 😆 */
+    {"SAD",          &icon_cat_sad},           /* 悲伤 😥 */
+    {"ANGRY",        &icon_cat_angry},         /* 生气 😤 */
+    {"SURPRISE",     &icon_cat_surprise},      /* 惊讶 😲 */
+    {"FEAR",         &icon_cat_fear},          /* 恐惧 😱 */
+    {"DISGUST",      &icon_cat_disgust},       /* 厌恶 🙄 */
+    {"EXCITED",      &icon_cat_excited},       /* 激动 🤩 */
+    {"INDIFFERENT",  &icon_cat_indifferent},   /* 冷漠 😒 */
+    {"NEUTRAL",      &icon_cat_neutral},       /* 中性 😐 */
+    {"DEJECTED",     &icon_cat_dejected},      /* 沮丧 😮‍💨 */
+    {"KISSY",        &icon_cat_kissy},         /* 撒娇 😘 */
+    {"SHY",          &icon_cat_shy},           /* 害羞 😳 */
+    {"CALM",         &icon_cat_calm},          /* 沉着 😶 */
+
+    /* legacy emotion names → closest match */
     {"LAUGHING",     &icon_cat_happy},
     {"FUNNY",        &icon_cat_happy},
-    {"SAD",          &icon_cat_sad},
-    {"DISAPPOINTED", &icon_cat_sad},
-    {"ANGRY",        &icon_cat_angry},
-    {"ANNOYED",      &icon_cat_angry},
-    {"SURPRISE",     &icon_cat_surprise},
-    {"SHOCKED",      &icon_cat_surprise},
-    {"SLEEP",        &icon_cat_sleep},
-    {"RELAXED",      &icon_cat_sleep},
+    {"LOVING",       &icon_cat_excited},
     {"WINK",         &icon_cat_happy},
-    {"LOVING",       &icon_cat_happy},
-    {"FEARFUL",      &icon_cat_surprise},
-    {"THINKING",     &icon_cat_neutral},
-    {"CONFUSED",     &icon_cat_surprise},
-    {"COOL",         &icon_cat_happy},
+    {"COOL",         &icon_cat_indifferent},
+    {"CONFIDENT",    &icon_cat_indifferent},
+    {"EMBARRASSED",  &icon_cat_shy},
+    {"SHOCKED",      &icon_cat_fear},
+    {"FEARFUL",      &icon_cat_fear},
+    {"THINKING",     &icon_cat_calm},
+    {"CONFUSED",     &icon_cat_disgust},
+    {"RELAXED",      &icon_cat_calm},
+    {"SLEEP",        &icon_cat_calm},
+    {"SILLY",        &icon_cat_happy},
+    {"DELICIOUS",    &icon_cat_excited},
+    {"DISAPPOINTED", &icon_cat_dejected},
+    {"ANNOYED",      &icon_cat_angry},
     {"WAKEUP",       &icon_cat_surprise},
     {"TOUCH",        &icon_cat_happy},
 };

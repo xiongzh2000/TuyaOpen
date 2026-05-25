@@ -12,12 +12,19 @@
 extern "C" {
 #endif
 
-LV_IMG_DECLARE(icon_cat_neutral);
 LV_IMG_DECLARE(icon_cat_happy);
 LV_IMG_DECLARE(icon_cat_sad);
 LV_IMG_DECLARE(icon_cat_angry);
 LV_IMG_DECLARE(icon_cat_surprise);
-LV_IMG_DECLARE(icon_cat_sleep);
+LV_IMG_DECLARE(icon_cat_fear);
+LV_IMG_DECLARE(icon_cat_disgust);
+LV_IMG_DECLARE(icon_cat_excited);
+LV_IMG_DECLARE(icon_cat_indifferent);
+LV_IMG_DECLARE(icon_cat_neutral);
+LV_IMG_DECLARE(icon_cat_dejected);
+LV_IMG_DECLARE(icon_cat_kissy);
+LV_IMG_DECLARE(icon_cat_shy);
+LV_IMG_DECLARE(icon_cat_calm);
 
 const lv_img_dsc_t *cat_face_get_by_emotion(const char *emotion_name);
 

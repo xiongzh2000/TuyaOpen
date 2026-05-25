@@ -26,27 +26,37 @@
 ***********************typedef define***********************
 ***********************************************************/
 AI_AGENT_EMO_T cAI_AGENT_EMO[] = {
-    {"U+1F636", EMOJI_NEUTRAL},      /* 😶 */
+    /* 13 primary emotions from AI backend */
+    {"U+1F606", EMOJI_HAPPY},        /* 😆 开心 */
+    {"U+1F625", EMOJI_SAD},          /* 😥 悲伤 */
+    {"U+1F624", EMOJI_ANGRY},        /* 😤 生气 */
+    {"U+1F632", EMOJI_SURPRISE},     /* 😲 惊讶 */
+    {"U+1F631", EMOJI_FEAR},         /* 😱 恐惧 */
+    {"U+1F644", EMOJI_DISGUST},      /* 🙄 厌恶 */
+    {"U+1F929", EMOJI_EXCITED},      /* 🤩 激动 */
+    {"U+1F612", EMOJI_INDIFFERENT},  /* 😒 冷漠 */
+    {"U+1F610", EMOJI_NEUTRAL},      /* 😐 中性 */
+    {"U+1F62E", EMOJI_DEJECTED},     /* 😮‍💨 沮丧 (base codepoint) */
+    {"U+1F618", EMOJI_KISSY},        /* 😘 撒娇 */
+    {"U+1F633", EMOJI_SHY},          /* 😳 害羞 */
+    {"U+1F636", EMOJI_CALM},         /* 😶 沉着 */
+
+    /* legacy emoji codes → closest match */
     {"U+1F642", EMOJI_HAPPY},        /* 🙂 */
-    {"U+1F606", EMOJI_LAUGHING},     /* 😆 */
-    {"U+1F602", EMOJI_FUNNY},        /* 😂 */
+    {"U+1F602", EMOJI_HAPPY},        /* 😂 */
     {"U+1F614", EMOJI_SAD},          /* 😔 */
     {"U+1F620", EMOJI_ANGRY},        /* 😠 */
-    {"U+1F62D", EMOJI_FEARFUL},      /* 😭 */
-    {"U+1F60D", EMOJI_LOVING},       /* 😍 */
-    {"U+1F633", EMOJI_EMBARRASSED},  /* 😳 */
+    {"U+1F62D", EMOJI_SAD},          /* 😭 */
+    {"U+1F60D", EMOJI_EXCITED},      /* 😍 */
     {"U+1F62F", EMOJI_SURPRISE},     /* 😯 */
-    {"U+1F631", EMOJI_SHOCKED},      /* 😱 */
-    {"U+1F914", EMOJI_THINKING},     /* 🤔 */
-    {"U+1F609", EMOJI_WINK},         /* 😉 */
-    {"U+1F60E", EMOJI_COOL},         /* 😎 */
-    {"U+1F60C", EMOJI_RELAXED},      /* 😌 */
-    {"U+1F924", EMOJI_DELICIOUS},    /* 🤤 */
-    {"U+1F618", EMOJI_KISSY},        /* 😘 */
-    {"U+1F60F", EMOJI_CONFIDENT},    /* 😏 */
-    {"U+1F634", EMOJI_SLEEP},        /* 😴 */
-    {"U+1F61C", EMOJI_SILLY},        /* 😜 */
-    {"U+1F644", EMOJI_CONFUSED}      /* 🙄 */
+    {"U+1F914", EMOJI_CALM},         /* 🤔 */
+    {"U+1F609", EMOJI_HAPPY},        /* 😉 */
+    {"U+1F60E", EMOJI_INDIFFERENT},  /* 😎 */
+    {"U+1F60C", EMOJI_CALM},         /* 😌 */
+    {"U+1F924", EMOJI_EXCITED},      /* 🤤 */
+    {"U+1F60F", EMOJI_INDIFFERENT},  /* 😏 */
+    {"U+1F634", EMOJI_CALM},         /* 😴 */
+    {"U+1F61C", EMOJI_HAPPY},        /* 😜 */
 };
 
 /***********************************************************

@@ -27,3 +27,4 @@ dist
 /.set_example
 /dist
 *monitor.log
+/docs/share/
