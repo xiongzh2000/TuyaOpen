@@ -27,6 +27,10 @@
 #include "ai_ui_manage.h"
 #endif
 
+#if defined(ENABLE_PRINTER) && (ENABLE_PRINTER == 1)
+#include "app_printer.h"
+#endif
+
 #include "ai_mcp_server.h"
 
 #include "ai_mcp.h"
@@ -165,6 +169,34 @@ static OPERATE_RET __set_mode(const MCP_PROPERTY_LIST_T *properties, MCP_RETURN_
     return OPRT_OK;
 }
 
+#if defined(ENABLE_PRINTER) && (ENABLE_PRINTER == 1)
+static OPERATE_RET __print_note(const MCP_PROPERTY_LIST_T *properties, MCP_RETURN_VALUE_T *ret_val, void *user_data)
+{
+    const char *text = NULL;
+
+    for (int i = 0; i < properties->count; i++) {
+        MCP_PROPERTY_T *prop = properties->properties[i];
+        if (strcmp(prop->name, "text") == 0 && prop->type == MCP_PROPERTY_TYPE_STRING) {
+            text = prop->default_val.str_val;
+            break;
+        }
+    }
+
+    if (NULL == text || text[0] == '\0') {
+        PR_ERR("print_note: text parameter is empty");
+        ai_mcp_return_value_set_bool(ret_val, FALSE);
+        return OPRT_OK;
+    }
+
+    PR_NOTICE("print_note: printing text, len=%d", (int)strlen(text));
+    OPERATE_RET rt = app_print_text(text);
+
+    ai_mcp_return_value_set_bool(ret_val, (rt == OPRT_OK) ? TRUE : FALSE);
+
+    return OPRT_OK;
+}
+#endif
+
 static OPERATE_RET __ai_mcp_tools_register(void)
 {
     OPERATE_RET rt = OPRT_OK;
@@ -220,6 +252,21 @@ static OPERATE_RET __ai_mcp_tools_register(void)
         NULL,
         MCP_PROP_INT_RANGE("mode", "The chat mode (0=hold, 1=key_press, 2=wakeup, 3=free)", 0, 3)
     ), err);
+
+#if defined(ENABLE_PRINTER) && (ENABLE_PRINTER == 1)
+    TUYA_CALL_ERR_GOTO(AI_MCP_TOOL_ADD(
+        "device_printer_print_note",
+        "Print text on the thermal printer (热敏打印机打印文字/便签).\n"
+        "MUST call this tool when user says: 打印/print/便签/备忘/提醒/memo/note/reminder.\n"
+        "Supports Chinese and English. Do NOT use for images or photos.\n"
+        "Parameters:\n"
+        "- text (string): The text to print (支持中英文).\n"
+        "Returns: true if success, false otherwise.",
+        __print_note,
+        NULL,
+        MCP_PROP_STR("text", "The text content to print.")
+    ), err);
+#endif
 
     return OPRT_OK;
 

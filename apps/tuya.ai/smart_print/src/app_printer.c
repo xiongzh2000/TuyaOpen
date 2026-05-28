@@ -6,10 +6,13 @@
  */
 
 #include "tal_api.h"
+#include <stdio.h>
+#include <string.h>
 
 #if defined(ENABLE_PRINTER) && (ENABLE_PRINTER == 1)
 #include "tdl_printer_manage.h"
 #include "tal_image_jpeg_codec.h"
+#include "tal_time_service.h"
 
 #if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
 #include "image_album.h"
@@ -170,6 +173,101 @@ OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len)
 
     tdl_printer_end(sg_printer_hdl);
 
+    tdl_printer_close(sg_printer_hdl);
+
+    __printer_lock_release();
+
+    return rt;
+}
+
+OPERATE_RET app_print_text(const char *text)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    if (NULL == text || text[0] == '\0') {
+        return OPRT_INVALID_PARM;
+    }
+
+    OPERATE_RET lock_rt = __printer_lock_acquire();
+    if (lock_rt != OPRT_OK) {
+        PR_WARN("print: printer is busy, rejecting request");
+        return OPRT_COM_ERROR;
+    }
+
+    if (NULL == sg_printer_hdl) {
+        rt = tdl_printer_find(PRINTER_NAME, &sg_printer_hdl);
+        if (rt != OPRT_OK) {
+            PR_ERR("print: printer_find failed, rt:%d", rt);
+            __printer_lock_release();
+            return rt;
+        }
+    }
+
+    rt = tdl_printer_open(sg_printer_hdl, NULL);
+    if (rt != OPRT_OK) {
+        PR_ERR("print: printer_open failed, rt:%d", rt);
+        __printer_lock_release();
+        return rt;
+    }
+
+    /* ESC @ — reset printer */
+    uint8_t esc_init[] = {0x1B, 0x40};
+    tdl_printer_send(sg_printer_hdl, esc_init, sizeof(esc_init));
+
+    /* ---- header ---- */
+    /* ESC a 1 — center align */
+    uint8_t align_center[] = {0x1B, 0x61, 0x01};
+    tdl_printer_send(sg_printer_hdl, align_center, sizeof(align_center));
+
+    const char *sep = "========================\n";
+    tdl_printer_send(sg_printer_hdl, (const uint8_t *)sep, strlen(sep));
+
+    /* GS ! 0x11 — double width + double height */
+    uint8_t font_big[] = {0x1D, 0x21, 0x11};
+    tdl_printer_send(sg_printer_hdl, font_big, sizeof(font_big));
+
+    const char *title = "MEMO\n";
+    tdl_printer_send(sg_printer_hdl, (const uint8_t *)title, strlen(title));
+
+    /* GS ! 0x00 — restore normal size */
+    uint8_t font_normal[] = {0x1D, 0x21, 0x00};
+    tdl_printer_send(sg_printer_hdl, font_normal, sizeof(font_normal));
+
+    tdl_printer_send(sg_printer_hdl, (const uint8_t *)sep, strlen(sep));
+
+    /* ---- body ---- */
+    /* ESC E 1 — bold on */
+    uint8_t bold_on[] = {0x1B, 0x45, 0x01};
+    tdl_printer_send(sg_printer_hdl, bold_on, sizeof(bold_on));
+
+    tdl_printer_send(sg_printer_hdl, (const uint8_t *)text, strlen(text));
+    uint8_t lf = 0x0A;
+    tdl_printer_send(sg_printer_hdl, &lf, 1);
+
+    /* ESC E 0 — bold off */
+    uint8_t bold_off[] = {0x1B, 0x45, 0x00};
+    tdl_printer_send(sg_printer_hdl, bold_off, sizeof(bold_off));
+
+    /* ---- footer: timestamp ---- */
+    const char *dash = "------------------------\n";
+    tdl_printer_send(sg_printer_hdl, (const uint8_t *)dash, strlen(dash));
+
+    /* ESC a 2 — right align */
+    uint8_t align_right[] = {0x1B, 0x61, 0x02};
+    tdl_printer_send(sg_printer_hdl, align_right, sizeof(align_right));
+
+    POSIX_TM_S tm = {0};
+    TIME_T now = tal_time_get_posix();
+    tal_time_get_local_time_custom(now, &tm);
+    char ts[32];
+    snprintf(ts, sizeof(ts), "%04d-%02d-%02d %02d:%02d\n",
+             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+             tm.tm_hour, tm.tm_min);
+    tdl_printer_send(sg_printer_hdl, (const uint8_t *)ts, strlen(ts));
+
+    tdl_printer_paper_feed(sg_printer_hdl, 3);
+
+    tdl_printer_end(sg_printer_hdl);
     tdl_printer_close(sg_printer_hdl);
 
     __printer_lock_release();

@@ -30,6 +30,7 @@ extern "C" {
 ********************function declaration********************
 ***********************************************************/
 OPERATE_RET app_print_jpeg_img(uint8_t *jpeg, uint32_t len);
+OPERATE_RET app_print_text(const char *text);
 
 #if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
 OPERATE_RET app_print_img_from_album(const char *filename);
