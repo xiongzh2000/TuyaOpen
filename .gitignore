@@ -28,3 +28,5 @@ dist
 /dist
 *monitor.log
 /docs/share/
+# TuyaOpen IDE — machine-local devplat bridge (auto-generated)
+.tuyaopen/ide/

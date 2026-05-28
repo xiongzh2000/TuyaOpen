@@ -35,6 +35,10 @@ static TIMER_ID            sg_disp_status_tm;
 ***********************************************************/
 #if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
 extern void app_ui_action_register(void);
+
+#if defined(ENABLE_AI_CHAT_CUSTOM_UI) && (ENABLE_AI_CHAT_CUSTOM_UI == 1)
+#include "app_paixue_ui.h"
+#endif
 #endif
 
 static void __printf_free_heap_tm_cb(TIMER_ID timer_id, void *arg)
@@ -98,6 +102,9 @@ OPERATE_RET app_chat_bot_init(void)
     TUYA_CALL_ERR_LOG(ai_chat_init(&ai_chat_cfg));
 
 #if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
+#if defined(ENABLE_AI_CHAT_CUSTOM_UI) && (ENABLE_AI_CHAT_CUSTOM_UI == 1)
+    app_paixue_ui_register();
+#endif
     app_ui_action_register();
 #endif
 

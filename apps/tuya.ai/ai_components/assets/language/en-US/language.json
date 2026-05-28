@@ -57,6 +57,15 @@
         "IMG2IMG":"Img2Img",
         "IMG2IMG_CAMERA":"Take Photo",
         "IMG2IMG_ALBUM":"From Album",
-        "IMG2IMG_READY":"Image ready, please say your edit instruction"
+        "IMG2IMG_READY":"Image ready, please say your edit instruction",
+
+        "RECOG_ALL":"Recognize",
+        "RECOG_CHINESE":"Chinese",
+        "RECOG_ENGLISH":"English",
+        "RECOG_RESULT":"Result",
+        "RECOG_PINYIN":"Pinyin",
+        "RECOG_RELATED":"Related",
+        "RECOG_TRANSLATION":"Translation",
+        "RECOGNIZING":"Recognizing..."
     }
 }

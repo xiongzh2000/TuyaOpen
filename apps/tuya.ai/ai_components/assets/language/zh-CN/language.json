@@ -57,6 +57,15 @@
         "IMG2IMG":"图生图",
         "IMG2IMG_CAMERA":"拍照",
         "IMG2IMG_ALBUM":"从相册",
-        "IMG2IMG_READY":"图片已就绪，请说出编辑指令"
+        "IMG2IMG_READY":"图片已就绪，请说出编辑指令",
+
+        "RECOG_ALL":"识万物",
+        "RECOG_CHINESE":"识中文",
+        "RECOG_ENGLISH":"识英文",
+        "RECOG_RESULT":"识别结果",
+        "RECOG_PINYIN":"拼音",
+        "RECOG_RELATED":"相关词",
+        "RECOG_TRANSLATION":"翻译",
+        "RECOGNIZING":"识别中..."
     }
 }

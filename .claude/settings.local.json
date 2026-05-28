@@ -36,7 +36,8 @@
       "mcp__tuyaopen-docs__read_multiple_files",
       "Bash(sips -c 800 1200 --cropOffset 3200 3200 /tmp/sch600-1.png --out /tmp/sch_qmi3.png)",
       "Bash(sips -c 1800 2500 --cropOffset 0 0 /tmp/sch600-1.png --out /tmp/sch_t5e1.png)",
-      "Bash(sips -c 1200 1500 --cropOffset 0 2200 /tmp/sch600-1.png --out /tmp/sch_touchlcd.png)"
+      "Bash(sips -c 1200 1500 --cropOffset 0 2200 /tmp/sch600-1.png --out /tmp/sch_touchlcd.png)",
+      "Bash(python3 /Users/xiongzhenhua/gitlab/embedded/TuyaOpen/tos.py build)"
     ]
   },
   "enableAllProjectMcpServers": true,
