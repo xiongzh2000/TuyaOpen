@@ -29,6 +29,8 @@
 
 #if defined(ENABLE_PRINTER) && (ENABLE_PRINTER == 1)
 #include "app_printer.h"
+#include "atop_service.h"
+#include "mix_method.h"
 #endif
 
 #include "ai_mcp_server.h"
@@ -195,6 +197,102 @@ static OPERATE_RET __print_note(const MCP_PROPERTY_LIST_T *properties, MCP_RETUR
 
     return OPRT_OK;
 }
+
+static OPERATE_RET __generate_image(const MCP_PROPERTY_LIST_T *properties, MCP_RETURN_VALUE_T *ret_val, void *user_data)
+{
+    const char *prompt = NULL;
+
+    for (int i = 0; i < properties->count; i++) {
+        MCP_PROPERTY_T *prop = properties->properties[i];
+        if (strcmp(prop->name, "prompt") == 0 && prop->type == MCP_PROPERTY_TYPE_STRING) {
+            prompt = prop->default_val.str_val;
+            break;
+        }
+    }
+
+    if (NULL == prompt || prompt[0] == '\0') {
+        PR_ERR("generate_image: prompt parameter is empty");
+        ai_mcp_return_value_set_bool(ret_val, FALSE);
+        return OPRT_OK;
+    }
+
+    PR_NOTICE("generate_image: prompt='%s'", prompt);
+
+    cJSON *body = cJSON_CreateObject();
+    cJSON_AddStringToObject(body, "prompt", prompt);
+    cJSON_AddNumberToObject(body, "width", 384);
+    cJSON_AddNumberToObject(body, "height", 384);
+    char *body_str = cJSON_PrintUnformatted(body);
+    cJSON_Delete(body);
+
+    if (!body_str) {
+        ai_mcp_return_value_set_bool(ret_val, FALSE);
+        return OPRT_OK;
+    }
+
+    PR_NOTICE("generate_image: calling ATOP...");
+
+    cJSON *result = NULL;
+    OPERATE_RET rt = atop_service_comm_post_simple("m.tc.device.image.gen", "1.0", body_str, NULL, &result);
+    cJSON_free(body_str);
+
+    if (rt != OPRT_OK || !result) {
+        PR_ERR("generate_image: ATOP failed, rt:%d", rt);
+        if (result) cJSON_Delete(result);
+        ai_mcp_return_value_set_bool(ret_val, FALSE);
+        return OPRT_OK;
+    }
+
+    cJSON *base64_item = cJSON_GetObjectItem(result, "base64Data");
+    if (!base64_item || !base64_item->valuestring || base64_item->valuestring[0] == '\0') {
+        PR_ERR("generate_image: no base64Data in response");
+        cJSON_Delete(result);
+        ai_mcp_return_value_set_bool(ret_val, FALSE);
+        return OPRT_OK;
+    }
+
+    const char *b64str = base64_item->valuestring;
+    size_t b64len = strlen(b64str);
+    size_t max_decoded = b64len * 3 / 4 + 4;
+
+    PR_NOTICE("generate_image: base64 len=%u, decoding...", (unsigned)b64len);
+
+    uint8_t *jpeg_data = (uint8_t *)tal_psram_malloc(max_decoded);
+    if (!jpeg_data) {
+        PR_ERR("generate_image: psram alloc %u failed", (unsigned)max_decoded);
+        cJSON_Delete(result);
+        ai_mcp_return_value_set_bool(ret_val, FALSE);
+        return OPRT_OK;
+    }
+
+    int decoded_len = tuya_base64_decode(b64str, jpeg_data);
+    cJSON_Delete(result);
+
+    if (decoded_len <= 0) {
+        PR_ERR("generate_image: base64 decode failed");
+        tal_psram_free(jpeg_data);
+        ai_mcp_return_value_set_bool(ret_val, FALSE);
+        return OPRT_OK;
+    }
+
+    PR_NOTICE("generate_image: decoded JPEG %d bytes, printing...", decoded_len);
+
+#if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
+    char name[AI_PICTURE_NAME_MAX_LEN + 1] = {0};
+    ai_picture_save_to_album(jpeg_data, (uint32_t)decoded_len, NULL, name);
+
+#if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
+    ai_ui_disp_msg(AI_UI_DISP_AI_IMAGE_LINK, (uint8_t *)name, strlen(name) + 1);
+#endif
+#endif
+
+    TUYA_CALL_ERR_LOG(app_print_jpeg_img(jpeg_data, (uint32_t)decoded_len));
+
+    tal_psram_free(jpeg_data);
+
+    ai_mcp_return_value_set_bool(ret_val, TRUE);
+    return OPRT_OK;
+}
 #endif
 
 static OPERATE_RET __ai_mcp_tools_register(void)
@@ -265,6 +363,18 @@ static OPERATE_RET __ai_mcp_tools_register(void)
         __print_note,
         NULL,
         MCP_PROP_STR("text", "The text content to print.")
+    ), err);
+
+    TUYA_CALL_ERR_GOTO(AI_MCP_TOOL_ADD(
+        "device_image_generate",
+        "Generate an image using AI and print it (AI生图并打印).\n"
+        "MUST call this tool when user says: 画/draw/生成图片/generate image.\n"
+        "Parameters:\n"
+        "- prompt (string): Description of the image to generate.\n"
+        "Returns: true if success, false otherwise.",
+        __generate_image,
+        NULL,
+        MCP_PROP_STR("prompt", "Description of the image to generate.")
     ), err);
 #endif
 
