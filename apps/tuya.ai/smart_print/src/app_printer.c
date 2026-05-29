@@ -12,12 +12,17 @@
 #include "tdl_printer_manage.h"
 #include "tal_image_jpeg_codec.h"
 
-extern const uint8_t note_template_header[];
-extern const uint8_t note_template_footer[];
-#define NOTE_TEMPLATE_HEADER_WIDTH  384
-#define NOTE_TEMPLATE_HEADER_HEIGHT 300
-#define NOTE_TEMPLATE_FOOTER_WIDTH  384
-#define NOTE_TEMPLATE_FOOTER_HEIGHT 105
+#include "lvgl.h"
+
+extern const uint8_t note_template_data[];
+extern lv_font_t font_puhui_18_2;
+#define NOTE_TEMPLATE_WIDTH   384
+#define NOTE_TEMPLATE_HEIGHT  525
+#define NOTE_TEMPLATE_TEXT_Y  300
+#define NOTE_TEMPLATE_TEXT_H  120
+#define NOTE_TEMPLATE_TEXT_X  70
+#define NOTE_TEMPLATE_TEXT_W  244
+#define NOTE_TEMPLATE_BPR     (NOTE_TEMPLATE_WIDTH / 8)
 
 #if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
 #include "image_album.h"
@@ -215,42 +220,82 @@ OPERATE_RET app_print_text(const char *text)
         return rt;
     }
 
-    /* ESC @ — reset printer */
+    /* 1. Copy full template to RAM */
+    uint32_t mono_size = NOTE_TEMPLATE_BPR * NOTE_TEMPLATE_HEIGHT;
+    uint8_t *mono_buf = (uint8_t *)tal_psram_malloc(mono_size);
+    if (!mono_buf) {
+        PR_ERR("print: psram alloc mono %u failed", mono_size);
+        tdl_printer_close(sg_printer_hdl);
+        __printer_lock_release();
+        return OPRT_MALLOC_FAILED;
+    }
+    memcpy(mono_buf, note_template_data, mono_size);
+
+    /* 2. Render text with LVGL v9 canvas */
+    uint16_t tw = NOTE_TEMPLATE_TEXT_W;
+    uint16_t th = NOTE_TEMPLATE_TEXT_H;
+    uint32_t rgb_size = tw * th * 2;
+    uint8_t *rgb_buf = (uint8_t *)tal_psram_malloc(rgb_size);
+    if (!rgb_buf) {
+        PR_ERR("print: psram alloc rgb %u failed", rgb_size);
+        tal_psram_free(mono_buf);
+        tdl_printer_close(sg_printer_hdl);
+        __printer_lock_release();
+        return OPRT_MALLOC_FAILED;
+    }
+
+    lv_obj_t *canvas = lv_canvas_create(lv_screen_active());
+    lv_canvas_set_buffer(canvas, rgb_buf, tw, th, LV_COLOR_FORMAT_RGB565);
+    lv_canvas_fill_bg(canvas, lv_color_white(), LV_OPA_COVER);
+
+    lv_layer_t layer;
+    lv_canvas_init_layer(canvas, &layer);
+
+    lv_draw_label_dsc_t label_dsc;
+    lv_draw_label_dsc_init(&label_dsc);
+    label_dsc.font = &font_puhui_18_2;
+    label_dsc.color = lv_color_black();
+    label_dsc.align = LV_TEXT_ALIGN_CENTER;
+    label_dsc.text = text;
+
+    /* Render text centered vertically */
+    int text_y = (th - 22) / 2;
+    lv_area_t coords = {0, text_y, tw - 1, th - 1};
+    lv_draw_label(&layer, &label_dsc, &coords);
+
+    lv_canvas_finish_layer(canvas, &layer);
+
+    /* 3. Convert RGB565 text pixels to 1-bit, OR into template */
+    uint16_t *px = (uint16_t *)rgb_buf;
+    for (int y = 0; y < th; y++) {
+        for (int x = 0; x < tw; x++) {
+            uint16_t c = px[y * tw + x];
+            uint8_t r5 = (c >> 11) & 0x1F;
+            uint8_t g6 = (c >> 5) & 0x3F;
+            uint8_t b5 = c & 0x1F;
+            uint16_t brightness = (r5 << 3) + (g6 << 2) + (b5 << 3);
+            if (brightness < 384) {
+                int bx = NOTE_TEMPLATE_TEXT_X + x;
+                int by = NOTE_TEMPLATE_TEXT_Y + y;
+                mono_buf[by * NOTE_TEMPLATE_BPR + bx / 8] |= (0x80 >> (bx % 8));
+            }
+        }
+    }
+
+    lv_obj_delete(canvas);
+    tal_psram_free(rgb_buf);
+
+    /* 4. Print complete bitmap */
     uint8_t esc_init[] = {0x1B, 0x40};
     tdl_printer_send(sg_printer_hdl, esc_init, sizeof(esc_init));
 
-    /* Part 1: mouse head + oval top */
     tdl_printer_send_bitmap(sg_printer_hdl, 0,
-                            NOTE_TEMPLATE_HEADER_WIDTH,
-                            NOTE_TEMPLATE_HEADER_HEIGHT,
-                            note_template_header);
-
-    /* Part 2: text inside oval */
-    uint8_t align_center[] = {0x1B, 0x61, 0x01};
-    tdl_printer_send(sg_printer_hdl, align_center, sizeof(align_center));
-
-    uint8_t bold_on[] = {0x1B, 0x45, 0x01};
-    tdl_printer_send(sg_printer_hdl, bold_on, sizeof(bold_on));
-
-    tdl_printer_paper_feed(sg_printer_hdl, 2);
-    tdl_printer_send(sg_printer_hdl, (const uint8_t *)text, strlen(text));
-    uint8_t lf = 0x0A;
-    tdl_printer_send(sg_printer_hdl, &lf, 1);
-    tdl_printer_paper_feed(sg_printer_hdl, 2);
-
-    uint8_t bold_off[] = {0x1B, 0x45, 0x00};
-    tdl_printer_send(sg_printer_hdl, bold_off, sizeof(bold_off));
-
-    /* Part 3: oval bottom + feet */
-    uint8_t align_left[] = {0x1B, 0x61, 0x00};
-    tdl_printer_send(sg_printer_hdl, align_left, sizeof(align_left));
-
-    tdl_printer_send_bitmap(sg_printer_hdl, 0,
-                            NOTE_TEMPLATE_FOOTER_WIDTH,
-                            NOTE_TEMPLATE_FOOTER_HEIGHT,
-                            note_template_footer);
+                            NOTE_TEMPLATE_WIDTH, NOTE_TEMPLATE_HEIGHT,
+                            mono_buf);
 
     tdl_printer_paper_feed(sg_printer_hdl, 3);
+
+    tal_psram_free(mono_buf);
 
     tdl_printer_end(sg_printer_hdl);
     tdl_printer_close(sg_printer_hdl);
