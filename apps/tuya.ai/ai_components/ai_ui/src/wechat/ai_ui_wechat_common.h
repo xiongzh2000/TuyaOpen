@@ -14,9 +14,30 @@
 extern "C" {
 #endif
 
-/***********************************************************
-********************function declaration********************
-***********************************************************/
+/* ---------------------------------------------------------------------------
+ * Rounded-screen safe inset
+ * --------------------------------------------------------------------------- */
+#if defined(AI_UI_WECHAT_SCREEN_CORNER_RADIUS) && (AI_UI_WECHAT_SCREEN_CORNER_RADIUS > 0)
+#define WECHAT_ROUNDED_CORNER_RADIUS   AI_UI_WECHAT_SCREEN_CORNER_RADIUS
+#else
+#define WECHAT_ROUNDED_CORNER_RADIUS   0
+#endif
+
+/**
+ * Safe inset derived from physical corner radius R.
+ * Max clip depth at 45° = R*(1-cos45°) ≈ R*0.293, so R/2 is conservative.
+ */
+#define WECHAT_SAFE_INSET  ((WECHAT_ROUNDED_CORNER_RADIUS + 1) / 2)
+
+/**
+ * Extended touch area added to every corner button so small targets near
+ * the rounded-screen edge are easier to tap.
+ */
+#define WECHAT_BTN_EXT_CLICK  12
+
+/* ---------------------------------------------------------------------------
+ * Function declarations
+ * --------------------------------------------------------------------------- */
 
 /* Chat page */
 void ai_ui_wechat_chat_init(lv_obj_t *parent);

@@ -297,10 +297,10 @@ void ai_ui_wechat_camera_init(lv_obj_t *parent)
     lv_obj_add_flag(sg_camera.preview_canvas, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(sg_camera.preview_canvas, __preview_click_cb, LV_EVENT_CLICKED, NULL);
 
-    /* ---- close button — top-left corner ---- */
+    /* ---- close button — top-left corner, inset for rounded screens ---- */
     sg_camera.close_btn = lv_obj_create(sg_camera.page);
     lv_obj_set_size(sg_camera.close_btn, CAMERA_CLOSE_SIZE, CAMERA_CLOSE_SIZE);
-    lv_obj_align(sg_camera.close_btn, LV_ALIGN_TOP_LEFT, 4, 4);
+    lv_obj_align(sg_camera.close_btn, LV_ALIGN_TOP_LEFT, 4 + WECHAT_SAFE_INSET, 4 + WECHAT_SAFE_INSET);
     lv_obj_set_style_bg_opa(sg_camera.close_btn, LV_OPA_50, 0);
     lv_obj_set_style_bg_color(sg_camera.close_btn, lv_color_black(), 0);
     lv_obj_set_style_radius(sg_camera.close_btn, LV_RADIUS_CIRCLE, 0);
@@ -308,6 +308,7 @@ void ai_ui_wechat_camera_init(lv_obj_t *parent)
     lv_obj_set_style_pad_all(sg_camera.close_btn, 0, 0);
     lv_obj_clear_flag(sg_camera.close_btn, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(sg_camera.close_btn, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_ext_click_area(sg_camera.close_btn, WECHAT_BTN_EXT_CLICK);
     lv_obj_add_event_cb(sg_camera.close_btn, __close_btn_click_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t *close_icon = lv_img_create(sg_camera.close_btn);
@@ -352,10 +353,10 @@ void ai_ui_wechat_camera_init(lv_obj_t *parent)
     lv_obj_set_style_img_recolor_opa(thumb_icon, LV_OPA_COVER, 0);
     lv_obj_center(thumb_icon);
 
-    /* ---- AI vision toggle button — top-right corner ---- */
+    /* ---- AI vision toggle button — top-right corner, inset for rounded screens ---- */
     sg_camera.ai_vision_btn = lv_obj_create(sg_camera.page);
     lv_obj_set_size(sg_camera.ai_vision_btn, CAMERA_CLOSE_SIZE, CAMERA_CLOSE_SIZE);
-    lv_obj_align(sg_camera.ai_vision_btn, LV_ALIGN_TOP_RIGHT, -4, 4);
+    lv_obj_align(sg_camera.ai_vision_btn, LV_ALIGN_TOP_RIGHT, -4 - WECHAT_SAFE_INSET, 4 + WECHAT_SAFE_INSET);
     lv_obj_set_style_bg_color(sg_camera.ai_vision_btn, lv_color_black(), 0);
     lv_obj_set_style_bg_opa(sg_camera.ai_vision_btn, LV_OPA_50, 0);
     lv_obj_set_style_radius(sg_camera.ai_vision_btn, LV_RADIUS_CIRCLE, 0);
@@ -363,6 +364,7 @@ void ai_ui_wechat_camera_init(lv_obj_t *parent)
     lv_obj_set_style_pad_all(sg_camera.ai_vision_btn, 0, 0);
     lv_obj_clear_flag(sg_camera.ai_vision_btn, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(sg_camera.ai_vision_btn, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_ext_click_area(sg_camera.ai_vision_btn, WECHAT_BTN_EXT_CLICK);
     lv_obj_add_event_cb(sg_camera.ai_vision_btn, __ai_vision_btn_click_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t *ai_vision_icon = lv_img_create(sg_camera.ai_vision_btn);

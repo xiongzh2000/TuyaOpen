@@ -401,10 +401,10 @@ static void __create_view_page(lv_obj_t *parent)
     lv_obj_center(sg_album.view_empty_label);
     lv_obj_add_flag(sg_album.view_empty_label, LV_OBJ_FLAG_HIDDEN);
 
-    /* Back button — top-left, circle style matching camera page */
+    /* Back button — top-left, inset from corner for rounded screens */
     lv_obj_t *view_back_btn = lv_obj_create(sg_album.view_page);
     lv_obj_set_size(view_back_btn, 40, 40);
-    lv_obj_align(view_back_btn, LV_ALIGN_TOP_LEFT, 4, 4);
+    lv_obj_align(view_back_btn, LV_ALIGN_TOP_LEFT, 4 + WECHAT_SAFE_INSET, 4 + WECHAT_SAFE_INSET);
     lv_obj_set_style_bg_opa(view_back_btn, LV_OPA_50, 0);
     lv_obj_set_style_bg_color(view_back_btn, lv_color_black(), 0);
     lv_obj_set_style_radius(view_back_btn, LV_RADIUS_CIRCLE, 0);
@@ -413,6 +413,7 @@ static void __create_view_page(lv_obj_t *parent)
     lv_obj_clear_flag(view_back_btn, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(view_back_btn, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_flag(view_back_btn, LV_OBJ_FLAG_GESTURE_BUBBLE);
+    lv_obj_set_ext_click_area(view_back_btn, WECHAT_BTN_EXT_CLICK);
     lv_obj_add_event_cb(view_back_btn, __view_close_btn_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t *back_icon = lv_img_create(view_back_btn);
@@ -421,10 +422,10 @@ static void __create_view_page(lv_obj_t *parent)
     lv_obj_set_style_img_recolor_opa(back_icon, LV_OPA_COVER, 0);
     lv_obj_center(back_icon);
 
-    /* Delete button — bottom-left, circle style */
+    /* Delete button — bottom-left, inset from corner for rounded screens */
     sg_album.view_delete_btn = lv_obj_create(sg_album.view_page);
     lv_obj_set_size(sg_album.view_delete_btn, 40, 40);
-    lv_obj_align(sg_album.view_delete_btn, LV_ALIGN_BOTTOM_LEFT, 8, -16);
+    lv_obj_align(sg_album.view_delete_btn, LV_ALIGN_BOTTOM_LEFT, 8 + WECHAT_SAFE_INSET, -16 - WECHAT_SAFE_INSET);
     lv_obj_set_style_bg_opa(sg_album.view_delete_btn, LV_OPA_50, 0);
     lv_obj_set_style_bg_color(sg_album.view_delete_btn, lv_color_black(), 0);
     lv_obj_set_style_radius(sg_album.view_delete_btn, LV_RADIUS_CIRCLE, 0);
@@ -433,6 +434,7 @@ static void __create_view_page(lv_obj_t *parent)
     lv_obj_clear_flag(sg_album.view_delete_btn, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(sg_album.view_delete_btn, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_flag(sg_album.view_delete_btn, LV_OBJ_FLAG_GESTURE_BUBBLE);
+    lv_obj_set_ext_click_area(sg_album.view_delete_btn, WECHAT_BTN_EXT_CLICK);
     lv_obj_add_event_cb(sg_album.view_delete_btn, __view_delete_btn_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t *del_icon = lv_img_create(sg_album.view_delete_btn);
@@ -454,6 +456,7 @@ static void __create_view_page(lv_obj_t *parent)
     lv_obj_set_style_pad_bottom(all_photos_btn, 8, 0);
     lv_obj_add_flag(all_photos_btn, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_flag(all_photos_btn, LV_OBJ_FLAG_GESTURE_BUBBLE);
+    lv_obj_set_ext_click_area(all_photos_btn, WECHAT_BTN_EXT_CLICK);
     lv_obj_add_event_cb(all_photos_btn, __view_all_btn_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t *all_photos_label = lv_label_create(all_photos_btn);
@@ -462,13 +465,13 @@ static void __create_view_page(lv_obj_t *parent)
     lv_obj_center(all_photos_label);
 
     /* Align after label text is set so LV_SIZE_CONTENT is computed correctly */
-    lv_obj_align(all_photos_btn, LV_ALIGN_BOTTOM_RIGHT, -8, -12);
+    lv_obj_align(all_photos_btn, LV_ALIGN_BOTTOM_RIGHT, -8 - WECHAT_SAFE_INSET, -12 - WECHAT_SAFE_INSET);
 
 #if defined(ENABLE_PRINTER) && (ENABLE_PRINTER == 1)
-    /* Print button — top-right, circle style */
+    /* Print button — top-right, inset from corner for rounded screens */
     lv_obj_t *print_btn = __create_icon_btn(sg_album.view_page, &icon_printer_app,
                                              __view_print_btn_cb);
-    lv_obj_align(print_btn, LV_ALIGN_TOP_RIGHT, -4, 4);
+    lv_obj_align(print_btn, LV_ALIGN_TOP_RIGHT, -4 - WECHAT_SAFE_INSET, 4 + WECHAT_SAFE_INSET);
     lv_obj_add_flag(print_btn, LV_OBJ_FLAG_GESTURE_BUBBLE);
 
     /* Print confirmation overlay — full-screen semi-transparent panel */
@@ -554,10 +557,10 @@ static void __create_all_page(lv_obj_t *parent)
     lv_obj_set_scrollbar_mode(sg_album.all_page, LV_SCROLLBAR_MODE_OFF);
     lv_obj_add_flag(sg_album.all_page, LV_OBJ_FLAG_HIDDEN);
 
-    /* Back button in top-left */
+    /* Back button in top-left, inset from corner for rounded screens */
     lv_obj_t *back_btn = lv_obj_create(sg_album.all_page);
     lv_obj_set_size(back_btn, 40, 40);
-    lv_obj_align(back_btn, LV_ALIGN_TOP_LEFT, 4, 4);
+    lv_obj_align(back_btn, LV_ALIGN_TOP_LEFT, 4 + WECHAT_SAFE_INSET, 4 + WECHAT_SAFE_INSET);
     lv_obj_set_style_bg_color(back_btn, lv_color_black(), 0);
     lv_obj_set_style_bg_opa(back_btn, LV_OPA_50, 0);
     lv_obj_set_style_radius(back_btn, LV_RADIUS_CIRCLE, 0);
@@ -565,6 +568,7 @@ static void __create_all_page(lv_obj_t *parent)
     lv_obj_set_style_pad_all(back_btn, 0, 0);
     lv_obj_clear_flag(back_btn, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(back_btn, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_ext_click_area(back_btn, WECHAT_BTN_EXT_CLICK);
 
     lv_obj_t *back_img = lv_img_create(back_btn);
     lv_img_set_src(back_img, &icon_back_24_24);
@@ -573,10 +577,11 @@ static void __create_all_page(lv_obj_t *parent)
     lv_obj_center(back_img);
     lv_obj_add_event_cb(back_btn, __all_back_btn_cb, LV_EVENT_CLICKED, NULL);
 
-    /* "选择" icon button in top-right */
+    /* "选择" icon button in top-right, inset from corner for rounded screens */
     sg_album.all_select_btn = __create_icon_btn(sg_album.all_page,
                                                 &icon_choose, __all_select_btn_cb);
-    lv_obj_align(sg_album.all_select_btn, LV_ALIGN_TOP_RIGHT, -4, 4);
+    lv_obj_align(sg_album.all_select_btn, LV_ALIGN_TOP_RIGHT, -4 - WECHAT_SAFE_INSET, 4 + WECHAT_SAFE_INSET);
+    lv_obj_set_ext_click_area(sg_album.all_select_btn, WECHAT_BTN_EXT_CLICK);
 
     /* Scrollable grid container — fixed position below top bar, never moves */
     sg_album.all_grid = lv_obj_create(sg_album.all_page);
@@ -613,7 +618,7 @@ static void __create_all_page(lv_obj_t *parent)
     /* Bottom bar for batch select mode (hidden by default) */
     sg_album.all_bottom_bar = lv_obj_create(sg_album.all_page);
     lv_obj_set_size(sg_album.all_bottom_bar, page_w, CTRL_BAR_HEIGHT);
-    lv_obj_align(sg_album.all_bottom_bar, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_obj_align(sg_album.all_bottom_bar, LV_ALIGN_BOTTOM_MID, 0, -WECHAT_SAFE_INSET);
     lv_obj_set_style_bg_color(sg_album.all_bottom_bar, lv_color_hex(0x333333), 0);
     lv_obj_set_style_bg_opa(sg_album.all_bottom_bar, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(sg_album.all_bottom_bar, 0, 0);
@@ -653,10 +658,11 @@ static void __create_select_page(lv_obj_t *parent)
     lv_obj_set_scrollbar_mode(sg_album.select_page, LV_SCROLLBAR_MODE_OFF);
     lv_obj_add_flag(sg_album.select_page, LV_OBJ_FLAG_HIDDEN);
 
-    /* Back button in top-left */
+    /* Back button in top-left, inset from corner for rounded screens */
     lv_obj_t *select_back_btn = __create_icon_btn(sg_album.select_page,
                                                   &icon_back_24_24, __select_cancel_btn_cb);
-    lv_obj_align(select_back_btn, LV_ALIGN_TOP_LEFT, 4, 4);
+    lv_obj_align(select_back_btn, LV_ALIGN_TOP_LEFT, 4 + WECHAT_SAFE_INSET, 4 + WECHAT_SAFE_INSET);
+    lv_obj_set_ext_click_area(select_back_btn, WECHAT_BTN_EXT_CLICK);
 
     /* Scrollable grid container — fixed position below top bar, never moves */
     sg_album.select_grid = lv_obj_create(sg_album.select_page);

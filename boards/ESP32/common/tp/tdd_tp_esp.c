@@ -10,6 +10,7 @@
 #include "tal_memory.h"
 
 #include "esp_lcd_touch.h"
+#include "driver/gpio.h"
 
 #include <string.h>
 
@@ -52,8 +53,14 @@ static OPERATE_RET __esp_tp_open(TDD_TP_DEV_HANDLE_T device)
  * @param[in]  max_num    Maximum number of touch points the caller can accept.
  * @param[out] point      Output array of touch points.
  * @param[out] point_num  Actual number of touch points returned.
- * @return OPRT_OK on success, OPRT_INVALID_PARM on bad arguments,
- *         OPRT_COM_ERROR if the underlying driver fails.
+ * @return OPRT_OK on success or when no touch is active, OPRT_INVALID_PARM on bad arguments.
+ * @note   Many capacitive touch ICs (e.g. FT5x06) enter a low-power state when
+ *         idle and NACK every I2C read until a touch event re-asserts the INT
+ *         line. To avoid noisy I2C error logs from the upstream polling loop:
+ *           1. If the INT pin is configured, only do the I2C read while INT is
+ *              asserted (active level matches config.levels.interrupt);
+ *           2. If a read still fails (transient bus noise), treat it as
+ *              "no touch" instead of returning an error.
  */
 static OPERATE_RET __esp_tp_read(TDD_TP_DEV_HANDLE_T device, uint8_t max_num, TDL_TP_POS_T *point, uint8_t *point_num)
 {
@@ -69,8 +76,17 @@ static OPERATE_RET __esp_tp_read(TDD_TP_DEV_HANDLE_T device, uint8_t max_num, TD
 
     *point_num = 0;
 
+    /* Skip I2C transaction entirely while idle (INT not asserted). */
+    if (dev->esp_tp_hdl->config.int_gpio_num != GPIO_NUM_NC) {
+        int active = (int)dev->esp_tp_hdl->config.levels.interrupt;
+        if (gpio_get_level(dev->esp_tp_hdl->config.int_gpio_num) != active) {
+            return OPRT_OK;
+        }
+    }
+
     if (ESP_OK != esp_lcd_touch_read_data(dev->esp_tp_hdl)) {
-        return OPRT_COM_ERROR;
+        /* Treat transient NACK while idle as "no touch" to avoid log spam. */
+        return OPRT_OK;
     }
 
     cap_num = (max_num < TDD_TP_ESP_MAX_POINTS) ? max_num : TDD_TP_ESP_MAX_POINTS;

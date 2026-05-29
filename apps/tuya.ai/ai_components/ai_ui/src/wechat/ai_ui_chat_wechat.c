@@ -132,7 +132,7 @@ static void __ui_set_network(AI_UI_WIFI_STATUS_E wifi_status)
 
     lv_vendor_disp_lock();
     lv_label_set_text(sg_main.network_label, wifi_icon);
-    lv_obj_align(sg_main.network_label, LV_ALIGN_RIGHT_MID, 0, 0);
+    lv_obj_align(sg_main.network_label, LV_ALIGN_RIGHT_MID, -WECHAT_SAFE_INSET, 0);
     lv_vendor_disp_unlock();
 }
 
@@ -144,7 +144,7 @@ static void __ui_set_chat_mode(char *chat_mode)
 
     lv_vendor_disp_lock();
     lv_label_set_text(sg_main.mode_label, chat_mode);
-    lv_obj_align(sg_main.mode_label, LV_ALIGN_LEFT_MID, 0, 0);
+    lv_obj_align(sg_main.mode_label, LV_ALIGN_LEFT_MID, WECHAT_SAFE_INSET, 0);
     lv_vendor_disp_unlock();
 }
 
@@ -194,7 +194,7 @@ static OPERATE_RET __ui_init(void)
     sg_main.mode_label = lv_label_create(sg_main.status_bar);
     lv_obj_set_style_text_font(sg_main.mode_label, text_font, 0);
     lv_label_set_text(sg_main.mode_label, "");
-    lv_obj_align(sg_main.mode_label, LV_ALIGN_LEFT_MID, 0, 0);
+    lv_obj_align(sg_main.mode_label, LV_ALIGN_LEFT_MID, WECHAT_SAFE_INSET, 0);
 
     sg_main.status_label = lv_label_create(sg_main.status_bar);
     lv_obj_set_flex_grow(sg_main.status_label, 1);
@@ -217,7 +217,7 @@ static OPERATE_RET __ui_init(void)
     sg_main.network_label = lv_label_create(sg_main.status_bar);
     lv_obj_set_style_text_font(sg_main.network_label, icon_font, 0);
     lv_label_set_text(sg_main.network_label, "");
-    lv_obj_align(sg_main.network_label, LV_ALIGN_RIGHT_MID, 0, 0);
+    lv_obj_align(sg_main.network_label, LV_ALIGN_RIGHT_MID, -WECHAT_SAFE_INSET, 0);
 
     /* Init sub-pages */
     ai_ui_wechat_chat_init(sg_main.container);

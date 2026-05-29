@@ -30,3 +30,4 @@ dist
 /docs/share/
 # TuyaOpen IDE — machine-local devplat bridge (auto-generated)
 .tuyaopen/ide/
+/.omc

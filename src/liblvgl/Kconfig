@@ -31,7 +31,7 @@ menuconfig ENABLE_LIBLVGL
             depends on LVGL_VERSION_9
             default n
 
-        config LVGL_ENABLE_TP
+        config ENABLE_LVGL_TP
             bool "enable lvgl tp"
             select ENABLE_TP
             default n
