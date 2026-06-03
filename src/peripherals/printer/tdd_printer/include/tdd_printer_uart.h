@@ -16,17 +16,23 @@
 extern "C" {
 #endif
 
-/***********************************************************
-***********************typedef define***********************
-***********************************************************/
+/* ---------------------------------------------------------------------------
+ * Type definitions
+ * --------------------------------------------------------------------------- */
 typedef struct {
     TUYA_UART_NUM_E port_id;
     TAL_UART_CFG_T cfg;
 } TDD_PRINTER_UART_CFG_T;
 
-/***********************************************************
-********************function declaration********************
-***********************************************************/
+/* ---------------------------------------------------------------------------
+ * Function declarations
+ * --------------------------------------------------------------------------- */
+/**
+ * @brief Register UART printer device
+ * @param[in] name Device name
+ * @param[in] cfg UART configuration
+ * @return OPRT_OK on success
+ */
 OPERATE_RET tdd_printer_uart_register(char *name, TDD_PRINTER_UART_CFG_T cfg);
 
 #ifdef __cplusplus

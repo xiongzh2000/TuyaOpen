@@ -1,33 +1,47 @@
-__pycache__
-.vscode
+# Python
+__pycache__/
+/.venv/
+.pytest_cache/
+
+# Editor / IDE
+.vscode/
+.cursor/
+.clangd
 .tags
-.env.json
-.cache
 
+# CMake / Build
 CMakeCache.txt
-/CMakeFiles
+/CMakeFiles/
 compile_commands.json
+.build/
+/build/
+/output/
 
-/.venv
-/tmp
-/.cache
-/cache
-/output
-/build
+# Logs
+*monitor.log
+
+# Distribution / Packages
+dist/
+
+# Project specific
+.env.json
+.target_logging
+.mirror
+.cache/
+*.using_config
 tuyadb/
 /platform/*/
-__pycache__
-.build
-*.using_config
-.mirror
-dist
-
-/arduino-tuyaopen
+/arduino-tuyaopen/
 /tools/tyutool/
 /.set_example
+/tmp/
+/cache/
 /dist
 *monitor.log
 /docs/share/
 # TuyaOpen IDE — machine-local devplat bridge (auto-generated)
 .tuyaopen/ide/
 /.omc
+
+# Docs
+/docs/superpowers/

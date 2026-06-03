@@ -238,7 +238,6 @@ OPERATE_RET ai_ui_disp_msg_sync(AI_UI_DISP_TYPE_E tp, uint8_t *data, int len);
  */
  void ai_ui_action_cb_register(AI_UI_ACTION_CB action_cb);
 
-
 #ifdef __cplusplus
 }
 #endif

@@ -659,6 +659,8 @@ static OPERATE_RET __send_bitmap_escpos(TDL_PRINTER_NODE_T *node,
                 tal_free(row_buf);
                 return rt;
             }
+            /* Give the printer state machine a tick between rows. */
+            tal_system_sleep(1);
         }
 
         row_offset    += chunk_rows;
@@ -669,7 +671,8 @@ static OPERATE_RET __send_bitmap_escpos(TDL_PRINTER_NODE_T *node,
          * header. Without this delay some printers still treat the
          * incoming command bytes as bitmap padding. */
         if (rows_remaining > 0) {
-            tal_system_sleep(5);
+            /* MERGE-TODO: branch used 5ms, master uses 20ms — tune per printer model */
+            tal_system_sleep(20);
         }
     }
 
