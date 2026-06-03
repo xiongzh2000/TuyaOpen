@@ -198,6 +198,7 @@ static OPERATE_RET __print_note(const MCP_PROPERTY_LIST_T *properties, MCP_RETUR
     return OPRT_OK;
 }
 
+#if 0 // TODO: 生图 MCP 暂时关闭
 static OPERATE_RET __generate_image(const MCP_PROPERTY_LIST_T *properties, MCP_RETURN_VALUE_T *ret_val, void *user_data)
 {
     const char *prompt = NULL;
@@ -220,8 +221,8 @@ static OPERATE_RET __generate_image(const MCP_PROPERTY_LIST_T *properties, MCP_R
 
     cJSON *body = cJSON_CreateObject();
     cJSON_AddStringToObject(body, "prompt", prompt);
-    cJSON_AddNumberToObject(body, "width", 384);
-    cJSON_AddNumberToObject(body, "height", 384);
+    cJSON_AddNumberToObject(body, "width", 320);
+    cJSON_AddNumberToObject(body, "height", 480);
     char *body_str = cJSON_PrintUnformatted(body);
     cJSON_Delete(body);
 
@@ -233,7 +234,7 @@ static OPERATE_RET __generate_image(const MCP_PROPERTY_LIST_T *properties, MCP_R
     PR_NOTICE("generate_image: calling ATOP...");
 
     cJSON *result = NULL;
-    OPERATE_RET rt = atop_service_comm_post_simple("m.tc.device.image.gen", "1.0", body_str, NULL, &result);
+    OPERATE_RET rt = atop_service_comm_post_simple("thing.tc.device.image.gen", "1.0", body_str, NULL, &result);
     cJSON_free(body_str);
 
     if (rt != OPRT_OK || !result) {
@@ -293,6 +294,7 @@ static OPERATE_RET __generate_image(const MCP_PROPERTY_LIST_T *properties, MCP_R
     ai_mcp_return_value_set_bool(ret_val, TRUE);
     return OPRT_OK;
 }
+#endif // 生图 MCP 暂时关闭
 #endif
 
 static OPERATE_RET __ai_mcp_tools_register(void)
@@ -354,17 +356,19 @@ static OPERATE_RET __ai_mcp_tools_register(void)
 #if defined(ENABLE_PRINTER) && (ENABLE_PRINTER == 1)
     TUYA_CALL_ERR_GOTO(AI_MCP_TOOL_ADD(
         "device_printer_print_note",
-        "Print text on the thermal printer (热敏打印机打印文字/便签).\n"
-        "MUST call this tool when user says: 打印/print/便签/备忘/提醒/memo/note/reminder.\n"
-        "Supports Chinese and English. Do NOT use for images or photos.\n"
+        "Print a sticky note on the thermal printer.\n"
+        "ONLY call this tool when user EXPLICITLY says: 打印便签/打印备忘录/print a note/print a memo.\n"
+        "Do NOT call for: general printing, image printing, photo printing, or any other request.\n"
+        "Do NOT call when user just mentions '打印' without '便签' or '备忘'.\n"
         "Parameters:\n"
-        "- text (string): The text to print (支持中英文).\n"
+        "- text (string): The note text to print.\n"
         "Returns: true if success, false otherwise.",
         __print_note,
         NULL,
         MCP_PROP_STR("text", "The text content to print.")
     ), err);
 
+#if 0 // TODO: 生图 MCP 暂时关闭
     TUYA_CALL_ERR_GOTO(AI_MCP_TOOL_ADD(
         "device_image_generate",
         "Generate an image using AI and print it (AI生图并打印).\n"
@@ -376,6 +380,7 @@ static OPERATE_RET __ai_mcp_tools_register(void)
         NULL,
         MCP_PROP_STR("prompt", "Description of the image to generate.")
     ), err);
+#endif // 生图 MCP 暂时关闭
 #endif
 
     return OPRT_OK;

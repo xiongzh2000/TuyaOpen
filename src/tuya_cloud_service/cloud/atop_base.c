@@ -245,21 +245,33 @@ static int atop_response_data_decode(const char *key, const uint8_t *input, size
 
     // base64 decode buffer
     size_t b64buffer_len = value_length * 3 / 4;
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+    uint8_t *b64buffer = tal_psram_malloc(b64buffer_len);
+#else
     uint8_t *b64buffer = tal_malloc(b64buffer_len);
+#endif
     size_t b64buffer_olen = 0;
 
     // base64 decode
     rt = mbedtls_base64_decode(b64buffer, b64buffer_len, &b64buffer_olen, (const uint8_t *)value, value_length);
     if (rt != OPRT_OK) {
         PR_ERR("base64 decode error:%d", rt);
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+        tal_psram_free(b64buffer);
+#else
         tal_free(b64buffer);
+#endif
         cJSON_Delete(root);
         return rt;
     }
 
     rt = atop_response_result_decrpyt(key, (const uint8_t *)b64buffer, b64buffer_olen, output, olen);
     cJSON_Delete(root);
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+    tal_psram_free(b64buffer);
+#else
     tal_free(b64buffer);
+#endif
     if (rt != OPRT_OK) {
         PR_ERR("atop_data_decrpyt error: %d", rt);
         return rt;
@@ -491,7 +503,12 @@ int atop_base_request(const atop_base_request_t *request, atop_base_response_t *
     }
 
     size_t result_buffer_length = 0;
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+    uint8_t *result_buffer = tal_psram_malloc(http_response.body_length);
+    if (result_buffer) memset(result_buffer, 0, http_response.body_length);
+#else
     uint8_t *result_buffer = tal_calloc(1, http_response.body_length);
+#endif
     if (NULL == result_buffer) {
         PR_ERR("result_buffer malloc fail");
         http_client_free(&http_response);
@@ -510,7 +527,11 @@ int atop_base_request(const atop_base_request_t *request, atop_base_response_t *
     }
 
     http_client_free(&http_response);
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+    tal_psram_free(result_buffer);
+#else
     tal_free(result_buffer);
+#endif
 
     return rt;
 }
