@@ -2,9 +2,9 @@
  * @file tdd_disp_esp_mipi_dsi_panel.c
  * @brief MIPI DSI panel register helper for ESP32-P4.
  *
- * Uses ESP-IDF's MIPI DSI bus + DBI (command) + DPI (video) APIs.
- * Sends vendor-specific init commands via DBI, then DPI provides continuous
- * video refresh from a PSRAM frame buffer.
+ * Uses esp_lcd_st7701 component for panel initialization (DCS commands are
+ * handled internally by the component), then registers with TuyaOpen TDL
+ * display layer.
  *
  * @copyright Copyright (c) 2021-2026 Tuya Inc. All Rights Reserved.
  */
@@ -20,15 +20,15 @@
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_mipi_dsi.h"
 #include "esp_ldo_regulator.h"
+#include "esp_lcd_st7701.h"
 #include "driver/gpio.h"
-#include "esp_rom_sys.h"
 
 #include "tdl_display_driver.h"
 
 #define TAG "tdd_disp_mipi_dsi"
 
 typedef struct {
-    esp_lcd_panel_handle_t dpi_panel;
+    esp_lcd_panel_handle_t panel;
     esp_lcd_panel_io_handle_t dbi_io;
     esp_lcd_dsi_bus_handle_t dsi_bus;
     TDD_DISP_ESP_LCD_CFG_T cfg;
@@ -37,22 +37,22 @@ typedef struct {
 static OPERATE_RET __dsi_open(TDD_DISP_DEV_HANDLE_T device)
 {
     DISP_MIPI_DSI_DEV_T *dev = (DISP_MIPI_DSI_DEV_T *)device;
-    if (!dev || !dev->dpi_panel) return OPRT_INVALID_PARM;
-    esp_lcd_panel_disp_on_off(dev->dpi_panel, true);
+    if (!dev || !dev->panel) return OPRT_INVALID_PARM;
+    esp_lcd_panel_disp_on_off(dev->panel, true);
     return OPRT_OK;
 }
 
 static OPERATE_RET __dsi_flush(TDD_DISP_DEV_HANDLE_T device, TDL_DISP_FRAME_BUFF_T *frame_buff)
 {
     DISP_MIPI_DSI_DEV_T *dev = (DISP_MIPI_DSI_DEV_T *)device;
-    if (!dev || !dev->dpi_panel || !frame_buff) return OPRT_INVALID_PARM;
+    if (!dev || !dev->panel || !frame_buff) return OPRT_INVALID_PARM;
 
     int x1 = frame_buff->x_start;
     int y1 = frame_buff->y_start;
     int x2 = frame_buff->x_start + frame_buff->width;
     int y2 = frame_buff->y_start + frame_buff->height;
 
-    esp_lcd_panel_draw_bitmap(dev->dpi_panel, x1, y1, x2, y2, frame_buff->frame);
+    esp_lcd_panel_draw_bitmap(dev->panel, x1, y1, x2, y2, frame_buff->frame);
 
     if (frame_buff->free_cb) {
         frame_buff->free_cb(frame_buff);
@@ -63,8 +63,8 @@ static OPERATE_RET __dsi_flush(TDD_DISP_DEV_HANDLE_T device, TDL_DISP_FRAME_BUFF
 static OPERATE_RET __dsi_close(TDD_DISP_DEV_HANDLE_T device)
 {
     DISP_MIPI_DSI_DEV_T *dev = (DISP_MIPI_DSI_DEV_T *)device;
-    if (!dev || !dev->dpi_panel) return OPRT_INVALID_PARM;
-    esp_lcd_panel_disp_on_off(dev->dpi_panel, false);
+    if (!dev || !dev->panel) return OPRT_INVALID_PARM;
+    esp_lcd_panel_disp_on_off(dev->panel, false);
     return OPRT_OK;
 }
 
@@ -83,7 +83,7 @@ static int __mipi_dsi_panel_init(LCD_MIPI_DSI_PANEL_HW_CFG_T *hw,
             ESP_LOGE(TAG, "Failed to enable MIPI DSI PHY LDO");
             return -1;
         }
-        ESP_LOGI(TAG, "MIPI DSI PHY LDO enabled (chan=%d, %lumV)", hw->ldo_chan, hw->ldo_voltage_mv);
+        ESP_LOGI(TAG, "MIPI DSI PHY LDO enabled (chan=%d, %dmV)", (int)hw->ldo_chan, (int)hw->ldo_voltage_mv);
     }
 
     /* 2. Create DSI bus */
@@ -93,50 +93,31 @@ static int __mipi_dsi_panel_init(LCD_MIPI_DSI_PANEL_HW_CFG_T *hw,
         .phy_clk_src = MIPI_DSI_PHY_CLK_SRC_DEFAULT,
         .lane_bit_rate_mbps = hw->lane_bit_rate_mbps,
     };
-    ESP_LOGI(TAG, "Creating DSI bus: lanes=%d, bit_rate=%lu Mbps ...", hw->num_data_lanes, hw->lane_bit_rate_mbps);
-    esp_err_t dsi_err = esp_lcd_new_dsi_bus(&bus_cfg, &dev->dsi_bus);
-    ESP_LOGI(TAG, "esp_lcd_new_dsi_bus returned: 0x%x", dsi_err);
-    if (dsi_err != ESP_OK) {
+    ESP_LOGI(TAG, "Creating DSI bus: lanes=%d, bit_rate=%d Mbps", (int)hw->num_data_lanes, (int)hw->lane_bit_rate_mbps);
+    if (esp_lcd_new_dsi_bus(&bus_cfg, &dev->dsi_bus) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to create DSI bus");
         return -1;
     }
+    ESP_LOGI(TAG, "DSI bus created OK");
 
-    /* 3. Create DBI IO (for sending init commands) */
+    /* 3. Create DBI IO (for panel driver to send DCS commands) */
     esp_lcd_dbi_io_config_t dbi_cfg = {
         .virtual_channel = 0,
         .lcd_cmd_bits = 8,
         .lcd_param_bits = 8,
     };
-    ESP_LOGI(TAG, "Step 3: Creating DBI IO ...");
     if (esp_lcd_new_panel_io_dbi(dev->dsi_bus, &dbi_cfg, &dev->dbi_io) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to create DBI IO");
         return -1;
     }
-    ESP_LOGI(TAG, "Step 3: DBI IO created OK");
+    ESP_LOGI(TAG, "DBI IO created OK");
 
-    /* Wait for DSI bus to stabilize before sending DCS commands */
-    esp_rom_delay_us(100 * 1000);
-
-    /* 4. Send vendor-specific init commands */
-    if (hw->init_cmds && hw->init_cmds_size > 0) {
-        ESP_LOGI(TAG, "Step 4: Sending %d vendor init commands ...", hw->init_cmds_size);
-        for (int i = 0; i < hw->init_cmds_size; i++) {
-            const LCD_MIPI_DSI_INIT_CMD_T *cmd = &hw->init_cmds[i];
-            esp_rom_delay_us(500); /* Busy-wait: keep CPU active for DSI DBI FIFO drain */
-            esp_lcd_panel_io_tx_param(dev->dbi_io, cmd->cmd, cmd->data, cmd->data_len);
-            if (cmd->delay_ms > 0) {
-                esp_rom_delay_us(cmd->delay_ms * 1000);
-            }
-        }
-        ESP_LOGI(TAG, "Step 4: Sent %d vendor init commands OK", hw->init_cmds_size);
-    }
-
-    /* 5. Create DPI panel (continuous video mode) */
-    ESP_LOGI(TAG, "Step 5: Creating DPI panel (%dx%d, clk=%d MHz) ...", (int)width, (int)height, (int)hw->dpi_clk_mhz);
+    /* 4. Create ST7701 panel via esp_lcd_st7701 component
+     *    The component handles DCS init commands internally */
     esp_lcd_dpi_panel_config_t dpi_cfg = {
-        .virtual_channel = 0,
         .dpi_clk_src = MIPI_DSI_DPI_CLK_SRC_DEFAULT,
         .dpi_clock_freq_mhz = hw->dpi_clk_mhz,
+        .virtual_channel = 0,
         .pixel_format = LCD_COLOR_PIXEL_FORMAT_RGB565,
         .num_fbs = 1,
         .video_timing = {
@@ -149,34 +130,42 @@ static int __mipi_dsi_panel_init(LCD_MIPI_DSI_PANEL_HW_CFG_T *hw,
             .vsync_back_porch  = hw->timings.vsync_back_porch,
             .vsync_front_porch = hw->timings.vsync_front_porch,
         },
+        .flags.use_dma2d = true,
+    };
+
+    st7701_vendor_config_t vendor_config = {
+        .init_cmds = hw->init_cmds,
+        .init_cmds_size = hw->init_cmds_size,
         .flags = {
-            .use_dma2d = true,
+            .use_mipi_interface = 1,
+        },
+        .mipi_config = {
+            .dsi_bus = dev->dsi_bus,
+            .dpi_config = &dpi_cfg,
         },
     };
-    esp_err_t dpi_err = esp_lcd_new_panel_dpi(dev->dsi_bus, &dpi_cfg, &dev->dpi_panel);
-    ESP_LOGI(TAG, "Step 5: esp_lcd_new_panel_dpi returned: 0x%x", dpi_err);
-    if (dpi_err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to create DPI panel");
+
+    esp_lcd_panel_dev_config_t lcd_dev_cfg = {
+        .bits_per_pixel = 16,
+        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
+        .reset_gpio_num = hw->reset_gpio_num,
+        .vendor_config = &vendor_config,
+    };
+
+    ESP_LOGI(TAG, "Creating ST7701 panel (%dx%d, dpi_clk=%d MHz) ...", (int)width, (int)height, (int)hw->dpi_clk_mhz);
+    if (esp_lcd_new_panel_st7701(dev->dbi_io, &lcd_dev_cfg, &dev->panel) != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to create ST7701 panel");
         return -1;
     }
 
-    /* 6. Hardware reset if GPIO specified */
-    if (hw->reset_gpio_num >= 0) {
-        gpio_config_t rst_cfg = {
-            .mode = GPIO_MODE_OUTPUT,
-            .pin_bit_mask = 1ULL << hw->reset_gpio_num,
-        };
-        gpio_config(&rst_cfg);
-        gpio_set_level(hw->reset_gpio_num, 0);
-        tal_system_sleep(20);
-        gpio_set_level(hw->reset_gpio_num, 1);
-        tal_system_sleep(120);
-    }
+    ESP_LOGI(TAG, "Resetting panel ...");
+    esp_lcd_panel_reset(dev->panel);
 
-    esp_lcd_panel_init(dev->dpi_panel);
+    ESP_LOGI(TAG, "Initializing panel ...");
+    esp_lcd_panel_init(dev->panel);
 
-    ESP_LOGI(TAG, "MIPI DSI panel initialized: %dx%d, %d lanes, %lu Mbps",
-             width, height, hw->num_data_lanes, hw->lane_bit_rate_mbps);
+    ESP_LOGI(TAG, "MIPI DSI ST7701 panel initialized: %dx%d, %d lanes, %d Mbps",
+             (int)width, (int)height, (int)hw->num_data_lanes, (int)hw->lane_bit_rate_mbps);
     return 0;
 }
 

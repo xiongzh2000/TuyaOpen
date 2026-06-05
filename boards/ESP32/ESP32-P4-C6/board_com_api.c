@@ -1,8 +1,9 @@
 /**
  * @file board_com_api.c
- * @brief Board-level hardware registration for ESP32-P4-C6 dev board.
- *        Hardware same as Waveshare ESP32-P4-WIFI6-Touch-LCD-4.3:
- *        4.3" 480x800 IPS (ILI9881C, MIPI DSI), GT911 touch, ES8311 audio codec.
+ * @brief Board-level hardware registration for ESP32-P4-C6 dev board
+ *        (Waveshare ESP32-P4-WIFI6-Touch-LCD-4.3).
+ *
+ * Hardware: 4.3" 480x800 (ST7701, MIPI DSI), GT911 touch, ES8311 audio codec.
  *
  * @copyright Copyright (c) 2021-2026 Tuya Inc. All Rights Reserved.
  */
@@ -14,6 +15,14 @@
 #include "tkl_pinmux.h"
 #include "tkl_gpio.h"
 #include "tdd_disp_esp_mipi_dsi_panel.h"
+
+/* Binary-compatible with st7701_lcd_init_cmd_t from esp_lcd_st7701 component */
+typedef struct {
+    int cmd;
+    const void *data;
+    size_t data_bytes;
+    unsigned int delay_ms;
+} st7701_init_cmd_t;
 #include "tdd_tp_esp_gt911.h"
 #include "tdl_display_manage.h"
 #include "tdd_audio_8311_codec.h"
@@ -35,7 +44,7 @@
 
 /* GT911 touch */
 #define TOUCH_INT_IO (-1)
-#define TOUCH_RST_IO (-1)
+#define TOUCH_RST_IO (23)
 
 /* ES8311 audio */
 #define I2S_ID        (0)
@@ -47,74 +56,50 @@
 #define PA_EN_IO      (53)
 
 /*
- * ILI9881C vendor init commands for the 4.3" 480x800 panel.
+ * ST7701 vendor-specific init commands for Waveshare 4.3" 480x800 panel.
+ * Taken from official Waveshare demo:
+ * https://github.com/waveshareteam/ESP32-P4-WIFI6-Touch-LCD-4.3
  */
-static const uint8_t ili9881c_page3[] = {0x98, 0x81, 0x03};
-static const uint8_t ili9881c_page4[] = {0x98, 0x81, 0x04};
-static const uint8_t ili9881c_page1[] = {0x98, 0x81, 0x01};
-static const uint8_t ili9881c_page0[] = {0x98, 0x81, 0x00};
-
-static const uint8_t p3_01[] = {0x00}; static const uint8_t p3_02[] = {0x00};
-static const uint8_t p3_03[] = {0x73}; static const uint8_t p3_04[] = {0x73};
-static const uint8_t p3_05[] = {0x00}; static const uint8_t p3_06[] = {0x06};
-static const uint8_t p3_07[] = {0x02}; static const uint8_t p3_08[] = {0x00};
-static const uint8_t p3_09[] = {0x01}; static const uint8_t p3_0a[] = {0x01};
-static const uint8_t p3_0f[] = {0x01}; static const uint8_t p3_10[] = {0x01};
-static const uint8_t p3_11[] = {0x01}; static const uint8_t p3_12[] = {0x01};
-static const uint8_t p3_13[] = {0x01}; static const uint8_t p3_14[] = {0x01};
-static const uint8_t p3_15[] = {0x00}; static const uint8_t p3_16[] = {0x00};
-static const uint8_t p3_17[] = {0x00}; static const uint8_t p3_18[] = {0x00};
-static const uint8_t p3_19[] = {0x00}; static const uint8_t p3_1a[] = {0x00};
-static const uint8_t p3_1b[] = {0x00}; static const uint8_t p3_1c[] = {0x00};
-static const uint8_t p3_1d[] = {0x00}; static const uint8_t p3_1e[] = {0x40};
-static const uint8_t p3_1f[] = {0xC0}; static const uint8_t p3_20[] = {0x06};
-static const uint8_t p3_21[] = {0x01}; static const uint8_t p3_22[] = {0x06};
-static const uint8_t p3_23[] = {0x01}; static const uint8_t p3_24[] = {0x88};
-static const uint8_t p3_25[] = {0x88}; static const uint8_t p3_26[] = {0x00};
-static const uint8_t p3_27[] = {0x00}; static const uint8_t p3_28[] = {0x3B};
-static const uint8_t p3_29[] = {0x03}; static const uint8_t p3_2a[] = {0x00};
-static const uint8_t p3_2b[] = {0x00}; static const uint8_t p3_2c[] = {0x00};
-static const uint8_t p3_2d[] = {0x00}; static const uint8_t p3_2e[] = {0x00};
-static const uint8_t p3_2f[] = {0x00}; static const uint8_t p3_30[] = {0x00};
-static const uint8_t p3_31[] = {0x00}; static const uint8_t p3_32[] = {0x00};
-static const uint8_t p3_33[] = {0x00}; static const uint8_t p3_34[] = {0x00};
-static const uint8_t p3_35[] = {0x00}; static const uint8_t p3_36[] = {0x00};
-static const uint8_t p3_37[] = {0x00}; static const uint8_t p3_38[] = {0x00};
-static const uint8_t p3_39[] = {0x00}; static const uint8_t p3_3a[] = {0x00};
-static const uint8_t p3_3b[] = {0x00}; static const uint8_t p3_3c[] = {0x00};
-static const uint8_t p3_3d[] = {0x00}; static const uint8_t p3_3e[] = {0x00};
-static const uint8_t p3_3f[] = {0x00}; static const uint8_t p3_40[] = {0x00};
-static const uint8_t p3_41[] = {0x00}; static const uint8_t p3_42[] = {0x00};
-static const uint8_t p3_43[] = {0x00}; static const uint8_t p3_44[] = {0x00};
-
-static const uint8_t p0_colmod[] = {0x55};
-static const uint8_t p0_tear[] = {0x00};
-
-static const LCD_MIPI_DSI_INIT_CMD_T sg_ili9881c_init_cmds[] = {
-    {0xFF, ili9881c_page3, 3, 0},
-    {0x01, p3_01, 1, 0}, {0x02, p3_02, 1, 0}, {0x03, p3_03, 1, 0}, {0x04, p3_04, 1, 0},
-    {0x05, p3_05, 1, 0}, {0x06, p3_06, 1, 0}, {0x07, p3_07, 1, 0}, {0x08, p3_08, 1, 0},
-    {0x09, p3_09, 1, 0}, {0x0A, p3_0a, 1, 0}, {0x0F, p3_0f, 1, 0}, {0x10, p3_10, 1, 0},
-    {0x11, p3_11, 1, 0}, {0x12, p3_12, 1, 0}, {0x13, p3_13, 1, 0}, {0x14, p3_14, 1, 0},
-    {0x15, p3_15, 1, 0}, {0x16, p3_16, 1, 0}, {0x17, p3_17, 1, 0}, {0x18, p3_18, 1, 0},
-    {0x19, p3_19, 1, 0}, {0x1A, p3_1a, 1, 0}, {0x1B, p3_1b, 1, 0}, {0x1C, p3_1c, 1, 0},
-    {0x1D, p3_1d, 1, 0}, {0x1E, p3_1e, 1, 0}, {0x1F, p3_1f, 1, 0}, {0x20, p3_20, 1, 0},
-    {0x21, p3_21, 1, 0}, {0x22, p3_22, 1, 0}, {0x23, p3_23, 1, 0}, {0x24, p3_24, 1, 0},
-    {0x25, p3_25, 1, 0}, {0x26, p3_26, 1, 0}, {0x27, p3_27, 1, 0}, {0x28, p3_28, 1, 0},
-    {0x29, p3_29, 1, 0}, {0x2A, p3_2a, 1, 0}, {0x2B, p3_2b, 1, 0}, {0x2C, p3_2c, 1, 0},
-    {0x2D, p3_2d, 1, 0}, {0x2E, p3_2e, 1, 0}, {0x2F, p3_2f, 1, 0}, {0x30, p3_30, 1, 0},
-    {0x31, p3_31, 1, 0}, {0x32, p3_32, 1, 0}, {0x33, p3_33, 1, 0}, {0x34, p3_34, 1, 0},
-    {0x35, p3_35, 1, 0}, {0x36, p3_36, 1, 0}, {0x37, p3_37, 1, 0}, {0x38, p3_38, 1, 0},
-    {0x39, p3_39, 1, 0}, {0x3A, p3_3a, 1, 0}, {0x3B, p3_3b, 1, 0}, {0x3C, p3_3c, 1, 0},
-    {0x3D, p3_3d, 1, 0}, {0x3E, p3_3e, 1, 0}, {0x3F, p3_3f, 1, 0}, {0x40, p3_40, 1, 0},
-    {0x41, p3_41, 1, 0}, {0x42, p3_42, 1, 0}, {0x43, p3_43, 1, 0}, {0x44, p3_44, 1, 0},
-    {0xFF, ili9881c_page4, 3, 0},
-    {0xFF, ili9881c_page1, 3, 0},
-    {0xFF, ili9881c_page0, 3, 0},
-    {0x3A, p0_colmod, 1, 0},
-    {0x35, p0_tear, 1, 0},
-    {0x11, NULL, 0, 150},
-    {0x29, NULL, 0, 20},
+static const st7701_init_cmd_t sg_st7701_init_cmds[] = {
+    {0xFF, (uint8_t[]){0x77, 0x01, 0x00, 0x00, 0x13}, 5, 0},
+    {0xEF, (uint8_t[]){0x08}, 1, 0},
+    {0xFF, (uint8_t[]){0x77, 0x01, 0x00, 0x00, 0x10}, 5, 0},
+    {0xC0, (uint8_t[]){0x63, 0x00}, 2, 0},
+    {0xC1, (uint8_t[]){0x0D, 0x02}, 2, 0},
+    {0xC2, (uint8_t[]){0x17, 0x08}, 2, 0},
+    {0xCC, (uint8_t[]){0x10}, 1, 0},
+    {0xB0, (uint8_t[]){0x40, 0xC9, 0x94, 0x0E, 0x10, 0x05, 0x0B, 0x09, 0x08, 0x26, 0x04, 0x52, 0x10, 0x69, 0x6B, 0x69}, 16, 0},
+    {0xB1, (uint8_t[]){0x40, 0xD2, 0x98, 0x0C, 0x92, 0x07, 0x09, 0x08, 0x07, 0x25, 0x02, 0x0E, 0x0C, 0x6E, 0x78, 0x55}, 16, 0},
+    {0xFF, (uint8_t[]){0x77, 0x01, 0x00, 0x00, 0x11}, 5, 0},
+    {0xB0, (uint8_t[]){0x5D}, 1, 0},
+    {0xB1, (uint8_t[]){0x4E}, 1, 0},
+    {0xB2, (uint8_t[]){0x87}, 1, 0},
+    {0xB3, (uint8_t[]){0x80}, 1, 0},
+    {0xB5, (uint8_t[]){0x4E}, 1, 0},
+    {0xB7, (uint8_t[]){0x85}, 1, 0},
+    {0xB8, (uint8_t[]){0x21}, 1, 0},
+    {0xB9, (uint8_t[]){0x10, 0x1F}, 2, 0},
+    {0xBB, (uint8_t[]){0x03}, 1, 0},
+    {0xBC, (uint8_t[]){0x00}, 1, 0},
+    {0xC1, (uint8_t[]){0x78}, 1, 0},
+    {0xC2, (uint8_t[]){0x78}, 1, 0},
+    {0xD0, (uint8_t[]){0x88}, 1, 0},
+    {0xE0, (uint8_t[]){0x00, 0x3A, 0x02}, 3, 0},
+    {0xE1, (uint8_t[]){0x04, 0xA0, 0x00, 0xA0, 0x05, 0xA0, 0x00, 0xA0, 0x00, 0x40, 0x40}, 11, 0},
+    {0xE2, (uint8_t[]){0x30, 0x00, 0x40, 0x40, 0x32, 0xA0, 0x00, 0xA0, 0x00, 0xA0, 0x00, 0xA0, 0x00}, 13, 0},
+    {0xE3, (uint8_t[]){0x00, 0x00, 0x33, 0x33}, 4, 0},
+    {0xE4, (uint8_t[]){0x44, 0x44}, 2, 0},
+    {0xE5, (uint8_t[]){0x09, 0x2E, 0xA0, 0xA0, 0x0B, 0x30, 0xA0, 0xA0, 0x05, 0x2A, 0xA0, 0xA0, 0x07, 0x2C, 0xA0, 0xA0}, 16, 0},
+    {0xE6, (uint8_t[]){0x00, 0x00, 0x33, 0x33}, 4, 0},
+    {0xE7, (uint8_t[]){0x44, 0x44}, 2, 0},
+    {0xE8, (uint8_t[]){0x08, 0x2D, 0xA0, 0xA0, 0x0A, 0x2F, 0xA0, 0xA0, 0x04, 0x29, 0xA0, 0xA0, 0x06, 0x2B, 0xA0, 0xA0}, 16, 0},
+    {0xEB, (uint8_t[]){0x00, 0x00, 0x4E, 0x4E, 0x00, 0x00, 0x00}, 7, 0},
+    {0xEC, (uint8_t[]){0x08, 0x01}, 2, 0},
+    {0xED, (uint8_t[]){0xB0, 0x2B, 0x98, 0xA4, 0x56, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xF7, 0x65, 0x4A, 0x89, 0xB2, 0x0B}, 16, 0},
+    {0xEF, (uint8_t[]){0x08, 0x08, 0x08, 0x45, 0x3F, 0x54}, 6, 0},
+    {0xFF, (uint8_t[]){0x77, 0x01, 0x00, 0x00, 0x00}, 5, 0},
+    {0x11, (uint8_t[]){0x00}, 0, 120},
+    {0x29, (uint8_t[]){0x00}, 0, 0},
 };
 
 static OPERATE_RET __board_backlight_cb(uint8_t brightness, void *arg)
@@ -128,6 +113,7 @@ static OPERATE_RET __board_register_display(void)
 {
     OPERATE_RET rt = OPRT_OK;
 
+    /* Backlight GPIO init */
     TUYA_GPIO_BASE_CFG_T bl_cfg = {
         .mode   = TUYA_GPIO_PUSH_PULL,
         .direct = TUYA_GPIO_OUTPUT,
@@ -136,22 +122,22 @@ static OPERATE_RET __board_register_display(void)
     tkl_gpio_init(LCD_BL_IO, &bl_cfg);
 
     LCD_MIPI_DSI_PANEL_HW_CFG_T dsi_hw = {
-        .num_data_lanes    = 2,
-        .lane_bit_rate_mbps = 1000,
-        .dpi_clk_mhz      = 80,
-        .reset_gpio_num    = LCD_RST_IO,
-        .ldo_chan          = DSI_PHY_LDO_CHAN,
-        .ldo_voltage_mv   = DSI_PHY_LDO_VOLTAGE_MV,
+        .num_data_lanes     = 2,
+        .lane_bit_rate_mbps = 500,    /* ST7701: 500 Mbps (per official demo) */
+        .dpi_clk_mhz       = 30,     /* ST7701: 30 MHz (per official demo) */
+        .reset_gpio_num     = LCD_RST_IO,
+        .ldo_chan           = DSI_PHY_LDO_CHAN,
+        .ldo_voltage_mv     = DSI_PHY_LDO_VOLTAGE_MV,
         .timings = {
-            .hsync_pulse_width = 40,
-            .hsync_back_porch  = 140,
-            .hsync_front_porch = 40,
-            .vsync_pulse_width = 4,
-            .vsync_back_porch  = 16,
-            .vsync_front_porch = 16,
+            .hsync_pulse_width = 12,
+            .hsync_back_porch  = 42,
+            .hsync_front_porch = 42,
+            .vsync_pulse_width = 8,
+            .vsync_back_porch  = 2,
+            .vsync_front_porch = 60,
         },
-        .init_cmds = sg_ili9881c_init_cmds,
-        .init_cmds_size = sizeof(sg_ili9881c_init_cmds) / sizeof(sg_ili9881c_init_cmds[0]),
+        .init_cmds      = sg_st7701_init_cmds,
+        .init_cmds_size = sizeof(sg_st7701_init_cmds) / sizeof(sg_st7701_init_cmds[0]),
     };
 
     TDD_DISP_ESP_LCD_CFG_T lcd_cfg = {
@@ -203,7 +189,7 @@ static OPERATE_RET __board_register_audio(void)
         .i2s_do_io      = I2S_DOUT_IO,
         .i2s_di_io      = I2S_DIN_IO,
         .gpio_output_pa = PA_EN_IO,
-        .es8311_addr    = 0x18,
+        .es8311_addr    = 0x30,  /* esp_codec_dev uses 8-bit left-aligned addr (0x18<<1) */
         .dma_desc_num   = 6,
         .dma_frame_num  = 240,
         .default_volume = 80,
@@ -216,8 +202,9 @@ OPERATE_RET board_register_hardware(void)
 {
     OPERATE_RET rt = OPRT_OK;
 
-    tkl_io_pinmux_config(I2C_SCL_IO, TUYA_IIC0_SCL);
-    tkl_io_pinmux_config(I2C_SDA_IO, TUYA_IIC0_SDA);
+    /* Note: Do NOT call tkl_io_pinmux_config for I2C on ESP32-P4.
+     * ESP-IDF i2c_new_master_bus() configures the GPIO internally.
+     * Calling pinmux before that conflicts and causes I2C NACK. */
 
     TUYA_CALL_ERR_LOG(__board_register_display());
     TUYA_CALL_ERR_LOG(__board_register_audio());

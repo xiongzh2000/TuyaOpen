@@ -14,6 +14,7 @@
 
 #include "driver/i2c_master.h"
 #include "driver/gpio.h"
+#include "esp_rom_sys.h"
 
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_touch.h"
@@ -99,6 +100,28 @@ OPERATE_RET tdd_tp_esp_i2c_gt911_register(char *name, TDD_TP_ESP_GT911_CFG_T *cf
 
     esp_lcd_panel_io_i2c_config_t tp_io_config = ESP_LCD_TOUCH_IO_I2C_GT911_CONFIG();
     tp_io_config.scl_speed_hz                  = 400 * 1000;
+
+    /* Probe GT911 address with retry before init. GT911 needs time to boot
+     * after power-on, and its I2C address may be 0x5D or 0x14 depending on the
+     * INT pin level at reset. This mirrors the official Waveshare BSP and also
+     * gives the controller enough time to become ready (avoids intermittent NACK). */
+    bool tp_found = false;
+    for (int retry = 0; retry < 20 && !tp_found; retry++) {
+        if (i2c_master_probe(i2c_bus, ESP_LCD_TOUCH_IO_I2C_GT911_ADDRESS, 100) == ESP_OK) {
+            tp_io_config.dev_addr = ESP_LCD_TOUCH_IO_I2C_GT911_ADDRESS;
+            tp_found = true;
+        } else if (i2c_master_probe(i2c_bus, ESP_LCD_TOUCH_IO_I2C_GT911_ADDRESS_BACKUP, 100) == ESP_OK) {
+            tp_io_config.dev_addr = ESP_LCD_TOUCH_IO_I2C_GT911_ADDRESS_BACKUP;
+            tp_found = true;
+        } else {
+            esp_rom_delay_us(20 * 1000);
+        }
+    }
+    if (tp_found) {
+        ESP_LOGI(TAG, "GT911 detected at I2C address 0x%02X", (unsigned)tp_io_config.dev_addr);
+    } else {
+        ESP_LOGW(TAG, "GT911 probe failed, fallback to default 0x%02X", (unsigned)tp_io_config.dev_addr);
+    }
 
     esp_rt = esp_lcd_new_panel_io_i2c(i2c_bus, &tp_io_config, &tp_io_handle);
     if (esp_rt != ESP_OK) {
