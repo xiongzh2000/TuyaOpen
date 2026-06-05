@@ -27,6 +27,7 @@ typedef enum  {
     TUYA_DISPLAY_QSPI,
     TUYA_DISPLAY_SPI,
     TUYA_DISPLAY_I2C,
+    TUYA_DISPLAY_MIPI,
 }TUYA_DISPLAY_TYPE_E;
 
 typedef void*  TDL_DISP_HANDLE_T;
