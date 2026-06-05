@@ -401,7 +401,10 @@ static void __popup_dismiss(void)
         lv_obj_add_flag(sg_chat.img2img_popup, LV_OBJ_FLAG_HIDDEN);
     }
 #endif
-} && (ENABLE_COMP_AI_VIDEO == 1)
+#endif
+}
+
+#if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
 static void __popup_camera_cb(lv_event_t *e)
 {
     (void)e;
@@ -538,6 +541,7 @@ static void __ui_open_chat(void)
         lv_obj_add_flag(sg_chat.img2img_popup, LV_OBJ_FLAG_HIDDEN);
     }
 #endif
+#endif
     lv_vendor_disp_unlock();
 }
 
@@ -555,6 +559,7 @@ static void __ui_close_chat(void)
     if (sg_chat.img2img_popup) {
         lv_obj_add_flag(sg_chat.img2img_popup, LV_OBJ_FLAG_HIDDEN);
     }
+#endif
 #endif
     lv_vendor_disp_unlock();
 }
@@ -908,6 +913,7 @@ static void __ui_disp_image(AI_UI_IMG_T *img)
     }
     sg_image_auto_return_tm = lv_timer_create(__image_auto_return_cb, 10000, NULL);
 
+#endif
     lv_vendor_disp_unlock();
 }
 
@@ -1499,6 +1505,7 @@ void ai_ui_wechat_chat_init(lv_obj_t *parent)
     sg_chat.content->user_data = sg_chat.talk_btn;
     lv_obj_set_size(sg_chat.content, LV_HOR_RES, LV_VER_RES - 40 - TALK_BTN_HEIGHT - 12);
 #endif
+#endif /* ENABLE_LVGL_TP */
 }
 
 /**

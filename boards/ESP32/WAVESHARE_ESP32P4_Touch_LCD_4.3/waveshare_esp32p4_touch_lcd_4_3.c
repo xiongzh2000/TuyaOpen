@@ -25,7 +25,9 @@ typedef struct {
 } st7701_init_cmd_t;
 #include "tdd_tp_esp_gt911.h"
 #include "tdl_display_manage.h"
+#if defined(ENABLE_AUDIO_CODECS) && (ENABLE_AUDIO_CODECS == 1)
 #include "tdd_audio_8311_codec.h"
+#endif
 
 /* I2C bus (shared by GT911 and ES8311) */
 #define I2C_NUM    (0)
@@ -174,6 +176,7 @@ static OPERATE_RET __board_register_display(void)
     return rt;
 }
 
+#if defined(ENABLE_AUDIO_CODECS) && (ENABLE_AUDIO_CODECS == 1)
 static OPERATE_RET __board_register_audio(void)
 {
     TDD_AUDIO_8311_CODEC_T codec_cfg = {
@@ -197,6 +200,7 @@ static OPERATE_RET __board_register_audio(void)
 
     return tdd_audio_8311_codec_register(AUDIO_CODEC_NAME, codec_cfg);
 }
+#endif /* ENABLE_AUDIO_CODECS */
 
 OPERATE_RET board_register_hardware(void)
 {
@@ -207,7 +211,9 @@ OPERATE_RET board_register_hardware(void)
      * Calling pinmux before that conflicts and causes I2C NACK. */
 
     TUYA_CALL_ERR_LOG(__board_register_display());
+#if defined(ENABLE_AUDIO_CODECS) && (ENABLE_AUDIO_CODECS == 1)
     TUYA_CALL_ERR_LOG(__board_register_audio());
+#endif
 
     return rt;
 }

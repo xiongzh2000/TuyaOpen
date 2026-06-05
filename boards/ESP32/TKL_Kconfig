@@ -6,12 +6,6 @@ config ENABLE_BLUETOOTH
     bool
     select ENABLE_BT_SERVICE
     select ENABLE_NIMBLE
-    # ESP32-P4 has no local BT controller (WiFi/BT are on the external C6
-    # coprocessor). Enabling BLE here makes BLE-netcfg the default, which fails
-    # on P4 and prevents the app from being discovered. Default to WiFi-only
-    # netcfg on P4, same as switch_demo.
-    default n if BOARD_CHOICE_ESP32_P4_C6
-    default n if BOARD_CHOICE_WAVESHARE_ESP32P4_TOUCH_LCD_4_3
     default y
 
 config ENABLE_ADC

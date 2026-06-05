@@ -44,7 +44,11 @@ if (CONFIG_ENABLE_TP)
     )
 endif()
 
-if (CONFIG_ENABLE_AUDIO)
+# common/audio/*.c are ES8311/ES8388 codec drivers that depend on the
+# audio_codecs component (tdl_audio_driver.h). Gate on ENABLE_AUDIO_CODECS
+# (set by audio_player), not ENABLE_AUDIO, so apps without a codec stack
+# (e.g. switch_demo) don't try to compile these and fail on the missing header.
+if (CONFIG_ENABLE_AUDIO_CODECS)
     list(APPEND BOARD_SRC
         "${AUDIO_SRCS}"
     )
