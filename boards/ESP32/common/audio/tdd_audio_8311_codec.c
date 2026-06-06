@@ -11,6 +11,9 @@
 #include "driver/gpio.h"
 #include "esp_codec_dev.h"
 #include "esp_codec_dev_defaults.h"
+#if defined(CONFIG_IDF_TARGET_ESP32P4)
+#include "es7210_adc.h"
+#endif
 
 #include "tuya_cloud_types.h"
 #include "tdl_audio_driver.h"
@@ -262,8 +265,36 @@ OPERATE_RET codec_8311_init(TUYA_I2S_NUM_E i2s_num, const TDD_AUDIO_8311_CODEC_T
     };
     output_dev_ = esp_codec_dev_new(&dev_cfg);
     assert(output_dev_ != NULL);
+
+#if defined(CONFIG_IDF_TARGET_ESP32P4)
+    /* ESP32-P4 board: the microphone is on a separate ES7210 ADC (I2C 0x80),
+     * not on the ES8311 (which is speaker-only here). Build a dedicated input
+     * device backed by ES7210, sharing the same I2C bus and I2S data path. */
+    audio_codec_i2c_cfg_t es7210_i2c_cfg = {
+        .port = i2c_port,
+        .addr = ES7210_CODEC_DEFAULT_ADDR,
+        .bus_handle = i2c_master_handle,
+    };
+    const audio_codec_ctrl_if_t *es7210_ctrl_if = audio_codec_new_i2c_ctrl(&es7210_i2c_cfg);
+    assert(es7210_ctrl_if != NULL);
+
+    es7210_codec_cfg_t es7210_cfg = {
+        .ctrl_if      = es7210_ctrl_if,
+        .mic_selected = ES7120_SEL_MIC1 | ES7120_SEL_MIC2,
+    };
+    const audio_codec_if_t *es7210_if = es7210_codec_new(&es7210_cfg);
+    assert(es7210_if != NULL);
+
+    esp_codec_dev_cfg_t in_dev_cfg = {
+        .dev_type = ESP_CODEC_DEV_TYPE_IN,
+        .codec_if = es7210_if,
+        .data_if  = data_if_,
+    };
+    input_dev_ = esp_codec_dev_new(&in_dev_cfg);
+#else
     dev_cfg.dev_type = ESP_CODEC_DEV_TYPE_IN;
     input_dev_ = esp_codec_dev_new(&dev_cfg);
+#endif
     assert(input_dev_ != NULL);
     esp_codec_set_disable_when_closed(output_dev_, false);
     esp_codec_set_disable_when_closed(input_dev_, false);

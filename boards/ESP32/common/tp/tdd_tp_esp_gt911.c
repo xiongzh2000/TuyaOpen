@@ -119,6 +119,12 @@ OPERATE_RET tdd_tp_esp_i2c_gt911_register(char *name, TDD_TP_ESP_GT911_CFG_T *cf
     }
     if (tp_found) {
         ESP_LOGI(TAG, "GT911 detected at I2C address 0x%02X", (unsigned)tp_io_config.dev_addr);
+        /* Device already probed ready at this address. Skip the driver's own
+         * hardware reset: re-resetting makes GT911 re-latch its I2C address
+         * from the INT pin level, after which read_cfg NACKs intermittently
+         * (touch works on some boots, fails on others). Keep the confirmed
+         * address by not letting esp_lcd_touch_new_i2c_gt911 reset it. */
+        tp_cfg.rst_gpio_num = GPIO_NUM_NC;
     } else {
         ESP_LOGW(TAG, "GT911 probe failed, fallback to default 0x%02X", (unsigned)tp_io_config.dev_addr);
     }
