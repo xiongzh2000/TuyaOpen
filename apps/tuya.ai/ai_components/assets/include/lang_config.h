@@ -50,6 +50,7 @@ extern "C" {
 #define PRINT_FAILED "打印失败"
 #define CAMERA "相机"
 #define ALBUM "相册"
+#define VIDEO_PLAY_TEST "视频测试"
 #define CANCEL "取消"
 #define ALL_PHOTOS "所有照片"
 #define SELECT_TEXT "选择"

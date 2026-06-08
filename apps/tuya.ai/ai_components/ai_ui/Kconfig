@@ -145,3 +145,7 @@ if(ENABLE_AI_UI_ICON_FONT)
 endif
 
 endif
+
+config ENABLE_VIDEO_PLAY_TEST
+    bool "enable video playback test (SD card, ESP32-P4)"
+    default n
