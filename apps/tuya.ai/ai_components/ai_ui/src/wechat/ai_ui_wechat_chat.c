@@ -31,7 +31,8 @@
 #endif
 
 LV_IMG_DECLARE(icon_ai_icon);
-#if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
+#if (defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)) || \
+    (defined(ENABLE_VIDEO_PLAY_TEST) && (ENABLE_VIDEO_PLAY_TEST == 1))
 LV_IMG_DECLARE(icon_camera_app);
 #endif
 #if defined(ENABLE_IMAGE_ALBUM) && (ENABLE_IMAGE_ALBUM == 1)
@@ -1258,7 +1259,11 @@ void ai_ui_wechat_chat_init(lv_obj_t *parent)
 
     /* Popup menu — above "+" button, hidden by default */
     sg_chat.popup_menu = lv_obj_create(parent);
+#if defined(ENABLE_VIDEO_PLAY_TEST) && (ENABLE_VIDEO_PLAY_TEST == 1)
     lv_obj_set_size(sg_chat.popup_menu, POPUP_WIDTH, POPUP_ITEM_H * 5 + 4);
+#else
+    lv_obj_set_size(sg_chat.popup_menu, POPUP_WIDTH, POPUP_ITEM_H * 4 + 4);
+#endif
     lv_obj_align_to(sg_chat.popup_menu, sg_chat.plus_btn, LV_ALIGN_OUT_TOP_RIGHT, 0, -4);
     lv_obj_set_style_bg_color(sg_chat.popup_menu, lv_color_white(), 0);
     lv_obj_set_style_bg_opa(sg_chat.popup_menu, LV_OPA_COVER, 0);
