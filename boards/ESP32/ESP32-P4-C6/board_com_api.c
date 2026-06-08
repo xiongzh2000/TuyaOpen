@@ -28,6 +28,9 @@ typedef struct {
 #if defined(ENABLE_AUDIO_CODECS) && (ENABLE_AUDIO_CODECS == 1)
 #include "tdd_audio_8311_codec.h"
 #endif
+#if defined(ENABLE_CAMERA) && (ENABLE_CAMERA == 1)
+#include "tdd_camera_esp_csi.h"
+#endif
 
 /* I2C bus (shared by GT911 and ES8311) */
 #define I2C_NUM    (0)
@@ -202,6 +205,23 @@ static OPERATE_RET __board_register_audio(void)
 }
 #endif /* ENABLE_AUDIO_CODECS */
 
+#if defined(ENABLE_CAMERA) && (ENABLE_CAMERA == 1)
+static OPERATE_RET __board_register_camera(void)
+{
+    /* OV5647 SCCB shares the GT911/ES8311 I2C bus (NUM 0, SCL 8 / SDA 7).
+     * The bus is created by the touch/audio drivers, so init_sccb=false here.
+     * reset/pwdn are not wired to dedicated GPIOs on this board. */
+    TDD_CAMERA_ESP_CSI_CFG_T cam_cfg = {
+        .i2c_port     = I2C_NUM,
+        .sccb_freq_hz = 100000,
+        .reset_pin    = -1,
+        .pwdn_pin     = -1,
+    };
+
+    return tdd_camera_esp_csi_register(CAMERA_NAME, &cam_cfg);
+}
+#endif /* ENABLE_CAMERA */
+
 OPERATE_RET board_register_hardware(void)
 {
     OPERATE_RET rt = OPRT_OK;
@@ -213,6 +233,9 @@ OPERATE_RET board_register_hardware(void)
     TUYA_CALL_ERR_LOG(__board_register_display());
 #if defined(ENABLE_AUDIO_CODECS) && (ENABLE_AUDIO_CODECS == 1)
     TUYA_CALL_ERR_LOG(__board_register_audio());
+#endif
+#if defined(ENABLE_CAMERA) && (ENABLE_CAMERA == 1)
+    TUYA_CALL_ERR_LOG(__board_register_camera());
 #endif
 
     return rt;

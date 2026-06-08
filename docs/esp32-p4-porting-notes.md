@@ -222,10 +222,14 @@ ES8311 崩溃修好后暴露出 button 缺失导致的二次崩溃。注意 boar
 
 ## 7. 长期维护提醒
 
-- platform 层（`platform/ESP32`）的 P4 board 适配（GT911/ST7701 组件声明、
-  PSRAM 200M、I2S GPIO）目前是官方 commit 上的本地 patch，**每次官方更新 platform 会丢**。
-  已提 PR 给 `tuya/TuyaOpen-esp32`（分支 `esp32p4-board-patch`），合并后
-  把 `platform_config.yaml` 指向新 commit 即可。
+- platform 层（`platform/ESP32`）的 P4 board 适配目前是官方 commit 上的本地 patch，
+  **每次官方更新 platform 会丢**。已提 PR 给 `tuya/TuyaOpen-esp32`
+  （分支 `esp32p4-board-patch`），合并后把 `platform_config.yaml` 指向新 commit 即可。
+  当前 platform 侧 patch 清单：
+  - GT911/ST7701 组件声明（`idf_component.yml`）、PSRAM 200M、I2S GPIO（`sdkconfig_esp32p4_c6`）
+  - **摄像头**：`esp_video 0.8.*` 组件、OV5647 + ISP + `VFS_SUPPORT_IO` 配置、
+    `tuyaos_adapter/CMakeLists.txt` 用 `IDF_TARGET` 守卫加 esp_video/esp_cam_sensor 到 REQUIRES、
+    `tkl_system.c` 补 `tkl_system_enter/exit_critical`（见第 9 节）
 - 本地若需临时固定 platform 版本不被 tos 提示更新：
   `mkdir -p .cache && touch .cache/.dont_prompt_update_platform`
 - board 层硬件驱动（`boards/ESP32/ESP32-P4-C6/board_com_api.c`、`common/lcd|tp|audio`）
@@ -241,3 +245,66 @@ ES8311 崩溃修好后暴露出 button 缺失导致的二次崩溃。注意 boar
 - ✅ ES8311 喇叭 + ES7210 麦克风，WakeNet 唤醒 + 按键对话 ASR 识别
 - ✅ WiFi 配网（esp_hosted → C6），连云、MQTT
 - ✅ 蓝牙（esp_hosted，可自动发现配网）
+- ✅ 摄像头 OV5647（MIPI-CSI）：屏幕预览 + 拍照 JPEG + AI 视觉识别
+
+---
+
+## 9. 摄像头 OV5647（MIPI-CSI / esp_video）
+
+板子 = Waveshare ESP32-P4-WIFI6-Touch-LCD-4.3 上的 OV5647。数据流：
+OV5647(RAW8) →CSI→ P4 ISP →YUV422→ `/dev/video0`(V4L2/esp_video)
+→ 采集线程取帧 → 预览(YUV422→RGB565 由 ai_ui 转换) + 按需 P4 硬件 JPEG 编码 → AI 识别。
+
+驱动：`boards/ESP32/common/camera/tdd_camera_esp_csi.[ch]`（gated on `ENABLE_CAMERA`，
+由 `ENABLE_COMP_AI_VIDEO` select）。SCCB 复用 GT911/ES8311 的 I2C0（`init_sccb=false`）。
+
+### 9.1 集成要点
+- `idf_component.yml` 加 `espressif/esp_video: 0.8.*`（`if target==esp32p4`），会自动带
+  `esp_cam_sensor`（含 OV5647）。
+- `sdkconfig_esp32p4_c6`：`CONFIG_CAMERA_OV5647=y` + `..._MIPI_RAW8_800x1280_50FPS=y` +
+  `CONFIG_ESP_VIDEO_ENABLE_ISP_PIPELINE_CONTROLLER=y`（ISP 的 AWB/AE/CCM，靠 esp_ipa，
+  缺了颜色会发绿）。
+- app `app_default.config`：`CONFIG_ENABLE_COMP_AI_VIDEO=y`，分辨率设成 **sensor 实际输出**
+  `800x1280`（TDL 帧池按 `width*height` 分配，小于实际会溢出）。
+
+### 9.2 踩坑（按定位顺序）
+1. **`sys/mman.h` 不存在**：ESP-IDF newlib 无 mmap。改用 V4L2 **USERPTR**——自分配
+   `heap_caps_aligned_calloc(cache_line, ..., MALLOC_CAP_SPIRAM)`，DQBUF 后用
+   `esp_cache_msync(.., M2C)` 失效缓存再读（CSI DMA 写 PSRAM 绕过 CPU cache）。
+2. **`tal_api.h` 拉 `tkl_hash.h` 找不到**：该编译单元（tuyaos_adapter）没有 security 头路径。
+   改成只 include `tal_memory/tal_log/tal_system/tal_thread.h`（参考 audio 驱动）。
+3. **`tdl_camera_driver.h` / `linux/videodev2.h` 找不到**：
+   - camera 组件没编 → `using.cmake` 不随 `app_default.config` 自动重生成，需删 `.build` 强制重配。
+   - esp_video 头没进 adapter → `if(CONFIG_IDF_TARGET_ESP32P4)` 在 IDF 组件求值时**为假**
+     （WiFi 没事是因为 esp_wifi_remote 传递带入 esp_hosted）。改用 `if(IDF_TARGET STREQUAL "esp32p4")`。
+4. **链接缺 `tkl_system_enter/exit_critical`**：camera 的 TDL list/queue 首次引用到，
+   而 ESP32 adapter 只声明没实现 → 在 `tkl_system.c` 补（FreeRTOS `portMUX` spinlock，
+   兼容任务/ISR 上下文）。
+5. **黑屏根因①**：`esp_video: Failed to register video VFS dev name=video0`。TuyaOpen 默认关了
+   `CONFIG_VFS_SUPPORT_IO`（用自己的 TKL 文件 API），而 esp_video 把摄像头注册成
+   `/dev/video0`、V4L2 用 `open/ioctl/close` 走 VFS。开启 `VFS_SUPPORT_IO/DIR/SELECT`。
+6. **S_FMT EINVAL①**：请求了 ISP 不支持的 packed YUYV。`VIDIOC_ENUM_FMT` 列出的只有
+   RAW8/RGB565/RGB888/YUV420/422P。
+7. **S_FMT EINVAL②**：在 `G_FMT`(RGB565) 的结构体上只改 `pixelformat` 就 `S_FMT`，
+   残留的 RGB565 `bytesperline/sizeimage` 与新格式冲突。要**新建干净的 `v4l2_format`**
+   只填 type/width/height/pixelformat（同官方 demo）。
+8. **黑屏根因②**：REQBUFS 用了 USERPTR，但采集线程 DQBUF/QBUF 的 `buf.memory` 漏改、
+   仍是 `V4L2_MEMORY_MMAP` → 内存类型不匹配，DQBUF 每次 EINVAL，静默空转取不到帧。
+   USERPTR 模式 QBUF 回队前还要回填 `m.userptr`/`length`。
+9. **预览发绿（最隐蔽）**：esp_video 把 fourcc 标成 `V4L2_PIX_FMT_YUV422P`（planar 命名），
+   但 **`COLOR_PIXEL_YUV422` 实际是 packed**（16bpp，Y/U/V 交织）。按 planar 拆三平面 →
+   色度全错 → 整体发绿、只剩淡轮廓。
+10. **颜色对接**：
+    - 拍照 JPEG：ISP packed 顺序 == P4 硬件 JPEG 的 `COLOR_PIXEL_YUV422` 约定 → **直接透传**，
+      照片颜色正确。
+    - 预览：ai_ui 的 `tal_image_*_yuv422_to_rgb565()`（ESP32 走 SW 路径）读 **UYVY**。
+      ISP 原生就是 UYVY，**直接透传**即可；多做一次 YUYV↔UYVY 字节交换反而把亮度/色度
+      搞反 → 绿+紫。开关：`CSI_ISP_YUV422_IS_YUYV`（本板=0）。
+
+### 9.3 关键代码位置
+- 采集/编码：`boards/ESP32/common/camera/tdd_camera_esp_csi.c`
+  - 格式/字节序开关在文件顶部 `CSI_CAPTURE_PIXFMT` / `CSI_ISP_YUV422_IS_YUYV`
+  - JPEG 节流 `CSI_JPEG_ENCODE_EVERY_N`（拍照按需，不必每帧编码）
+- 注册：`boards/ESP32/ESP32-P4-C6/board_com_api.c` `__board_register_camera()`
+- 上层：`apps/tuya.ai/ai_components/ai_video`（`tdl_camera_find_dev("camera")`、
+  `ai_video_get_jpeg_frame`），UI 动作 `apps/tuya.ai/smart_print/src/app_ui_action.c`。

@@ -15,6 +15,9 @@ file(GLOB_RECURSE IO_EXPANDER_SRCS "${COMMON_PATH}/io_expander/*.c")
 # add tp source files
 file(GLOB_RECURSE TP_SRCS "${COMMON_PATH}/tp/*.c")
 
+# add camera source files
+file(GLOB_RECURSE CAMERA_SRCS "${COMMON_PATH}/camera/*.c")
+
 # add button source files
 file(GLOB_RECURSE BUTTON_SRCS "${COMMON_PATH}/button/*.c")
 
@@ -55,6 +58,18 @@ if (CONFIG_ENABLE_AUDIO_CODECS)
 
     list(APPEND BOARD_INC
         "${COMMON_PATH}/audio"
+    )
+endif()
+
+# common/camera/*.c is the ESP32-P4 MIPI-CSI camera driver (esp_video V4L2 +
+# hardware JPEG). Gate on ENABLE_CAMERA (selected by ENABLE_COMP_AI_VIDEO).
+if (CONFIG_ENABLE_CAMERA)
+    list(APPEND BOARD_SRC
+        "${CAMERA_SRCS}"
+    )
+
+    list(APPEND BOARD_INC
+        "${COMMON_PATH}/camera"
     )
 endif()
 
