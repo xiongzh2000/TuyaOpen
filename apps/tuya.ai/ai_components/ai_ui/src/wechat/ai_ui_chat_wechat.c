@@ -224,6 +224,9 @@ static OPERATE_RET __ui_init(void)
 #if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
     ai_ui_wechat_camera_init(screen);
 #endif
+#if defined(ENABLE_VIDEO_PLAY_TEST) && (ENABLE_VIDEO_PLAY_TEST == 1)
+    ai_ui_wechat_video_test_init(screen);
+#endif
 #if defined(ENABLE_IMAGE_ALBUM) && (ENABLE_IMAGE_ALBUM == 1)
     ai_ui_wechat_album_init(screen);
 #endif

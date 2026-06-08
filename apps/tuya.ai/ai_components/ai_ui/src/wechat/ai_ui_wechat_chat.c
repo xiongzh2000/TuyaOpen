@@ -460,6 +460,15 @@ static void __img2img_album_cb(lv_event_t *e)
 #endif
 #endif /* ENABLE_COMP_AI_PICTURE */
 
+#if defined(ENABLE_VIDEO_PLAY_TEST) && (ENABLE_VIDEO_PLAY_TEST == 1)
+static void __popup_video_test_cb(lv_event_t *e)
+{
+    (void)e;
+    __popup_dismiss();
+    ai_ui_wechat_video_test_open();
+}
+#endif
+
 
 /**
  * @brief Dismiss popup when user clicks on the chat content area.
@@ -1249,7 +1258,7 @@ void ai_ui_wechat_chat_init(lv_obj_t *parent)
 
     /* Popup menu — above "+" button, hidden by default */
     sg_chat.popup_menu = lv_obj_create(parent);
-    lv_obj_set_size(sg_chat.popup_menu, POPUP_WIDTH, POPUP_ITEM_H * 4 + 4);
+    lv_obj_set_size(sg_chat.popup_menu, POPUP_WIDTH, POPUP_ITEM_H * 5 + 4);
     lv_obj_align_to(sg_chat.popup_menu, sg_chat.plus_btn, LV_ALIGN_OUT_TOP_RIGHT, 0, -4);
     lv_obj_set_style_bg_color(sg_chat.popup_menu, lv_color_white(), 0);
     lv_obj_set_style_bg_opa(sg_chat.popup_menu, LV_OPA_COVER, 0);
@@ -1357,6 +1366,38 @@ void ai_ui_wechat_chat_init(lv_obj_t *parent)
     lv_label_set_text(add_img_label, ADD_IMAGE);
     lv_obj_add_event_cb(add_img_btn, __popup_add_img_cb, LV_EVENT_CLICKED, NULL);
 #endif /* ENABLE_IMAGE_ALBUM */
+
+#if defined(ENABLE_VIDEO_PLAY_TEST) && (ENABLE_VIDEO_PLAY_TEST == 1)
+    /* Video test option */
+    lv_obj_t *vt_btn = lv_obj_create(sg_chat.popup_menu);
+    lv_obj_set_size(vt_btn, POPUP_WIDTH - 4, POPUP_ITEM_H);
+    lv_obj_set_style_bg_opa(vt_btn, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(vt_btn, 0, 0);
+    lv_obj_set_style_pad_all(vt_btn, 0, 0);
+    lv_obj_set_style_pad_left(vt_btn, 8, 0);
+    lv_obj_set_style_pad_column(vt_btn, 8, 0);
+    lv_obj_set_style_radius(vt_btn, 6, 0);
+    lv_obj_clear_flag(vt_btn, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(vt_btn, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_flex_flow(vt_btn, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(vt_btn, LV_FLEX_ALIGN_START,
+                          LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *vt_icon_wrap = lv_obj_create(vt_btn);
+    lv_obj_remove_style_all(vt_icon_wrap);
+    lv_obj_set_size(vt_icon_wrap, POPUP_ICON_SIZE, POPUP_ICON_SIZE);
+    lv_obj_clear_flag(vt_icon_wrap, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_t *vt_icon = lv_img_create(vt_icon_wrap);
+    lv_img_set_src(vt_icon, &icon_camera_app);
+    lv_obj_set_style_img_recolor(vt_icon, lv_color_hex(0x333333), 0);
+    lv_obj_set_style_img_recolor_opa(vt_icon, LV_OPA_COVER, 0);
+    lv_obj_center(vt_icon);
+
+    lv_obj_t *vt_label = lv_label_create(vt_btn);
+    lv_obj_set_style_text_color(vt_label, lv_color_hex(0x333333), 0);
+    lv_label_set_text(vt_label, VIDEO_PLAY_TEST);
+    lv_obj_add_event_cb(vt_btn, __popup_video_test_cb, LV_EVENT_CLICKED, NULL);
+#endif /* ENABLE_VIDEO_PLAY_TEST */
 
 #if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
     /* img2img entry */

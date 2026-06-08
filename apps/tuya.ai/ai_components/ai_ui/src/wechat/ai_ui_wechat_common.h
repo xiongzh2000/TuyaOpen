@@ -49,6 +49,12 @@ void ai_ui_wechat_camera_init(lv_obj_t *parent);
 void ai_ui_wechat_camera_register(void);
 #endif
 
+/* Video playback test page */
+#if defined(ENABLE_VIDEO_PLAY_TEST) && (ENABLE_VIDEO_PLAY_TEST == 1)
+void ai_ui_wechat_video_test_init(lv_obj_t *parent);
+void ai_ui_wechat_video_test_open(void);
+#endif
+
 /* Album page */
 #if defined(ENABLE_IMAGE_ALBUM) && (ENABLE_IMAGE_ALBUM == 1)
 void ai_ui_wechat_album_init(lv_obj_t *parent);
